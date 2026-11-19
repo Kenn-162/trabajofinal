@@ -1,0 +1,5 @@
+<?php
+if(session_status()!==PHP_SESSION_ACTIVE){session_set_cookie_params(['httponly'=>true,'samesite'=>'Lax','path'=>'/']);session_start();}
+function db(){static $p=null;if(!$p)$p=new PDO('mysql:host='.(getenv('DB_HOST')?:'127.0.0.1').';dbname='.(getenv('DB_NAME')?:'senati_multijugador').';charset=utf8mb4',getenv('DB_USER')?:'root',getenv('DB_PASSWORD')?:'', [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);return $p;}
+function csrf(){if(empty($_SESSION['csrf']))$_SESSION['csrf']=bin2hex(random_bytes(32));return $_SESSION['csrf'];}
+function formpage($t){echo '<!doctype html><html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{background:#07101f;color:white;font:16px Arial;display:grid;place-items:center;min-height:90vh}.box{background:#142238;padding:28px;border-radius:12px;width:min(360px,90vw)}input{box-sizing:border-box;width:100%;padding:12px;margin:8px 0;background:#07101f;color:white}button{padding:12px;background:#f5b700}</style><main class="box"><h1>'.$t.'</h1>';}
