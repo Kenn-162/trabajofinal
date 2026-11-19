@@ -10,3 +10,9 @@ Multijugador online y autenticacion (Laragon)
 El endpoint auth/session.php responde 401 solo si no hay sesion; con sesion activa siempre entrega username y un token HMAC de corta duracion (el cliente pide uno nuevo en cada reconexion). Node valida el token antes de admitir conexiones. El login usa password_hash/password_verify y registra hora, IP y agente en historial_sesiones. El chat conserva los ultimos 50 mensajes durante la vida del proceso. Los movimientos se emiten como maximo cada 60 ms, solo si cambiaron; jugadores remotos interpolan posiciones.
 
 Abrir index.html directamente conserva el visor original; autenticacion y multijugador requieren Apache/PHP/MySQL y Node.js. En despliegue publico usa HTTPS y configura el origen y el secreto.
+
+Salto y globos de chat
+- Espacio salta (solo en el modo Recorrer y nunca mientras escribes en el chat). La logica esta en js/salto.js: impulso vertical + gravedad (~0.75 m) y solo se puede saltar desde el suelo. P.y sigue siendo la altura del suelo que calcula la navegacion; el salto es un desfase JUMP.h que se suma a la camara. En pantallas tactiles aparece un boton "Saltar".
+- La posicion vertical enviada a los demas es y = suelo + salto, dentro del mismo envio limitado a ~16 por segundo y solo con cambios reales (al aterrizar se manda una ultima posicion exacta).
+- El globo de texto se dibuja unicamente sobre los OTROS jugadores (6 s, y se reinicia si escriben otro mensaje). Tu propio mensaje aparece solo en el historial del chat global.
+- El servidor limita ~25 movimientos/s y ~2 mensajes/s por jugador y acota las coordenadas.

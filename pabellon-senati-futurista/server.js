@@ -68,14 +68,24 @@ io.on('connection', socket => {
   socket.emit('world:init', { selfId: socket.id, players: [...players.values()], history: history.slice(-50) });
   socket.broadcast.emit('player:joined', player);
 
+  /* Anti-saturacion: maximo ~25 movimientos/s por jugador y valores acotados al mapa
+     (y = suelo 0 / piso 2 en 3 m + salto, de ahi el limite). */
+  let lastMove = 0, lastChat = 0;
+  const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
   socket.on('player:move', v => {
     if (!v || ![v.x, v.y, v.z, v.yaw].every(Number.isFinite)) return;
-    Object.assign(player, { x: v.x, y: v.y, z: v.z, yaw: v.yaw });
+    const now = Date.now();
+    if (now - lastMove < 40) return;
+    lastMove = now;
+    Object.assign(player, { x: clamp(v.x, -200, 200), y: clamp(v.y, -1, 6), z: clamp(v.z, -200, 200), yaw: v.yaw % (Math.PI * 2) });
     socket.broadcast.volatile.emit('player:moved', player);
   });
 
   socket.on('chat:send', raw => {
     if (typeof raw !== 'string' || !raw.trim()) return;
+    const now = Date.now();
+    if (now - lastChat < 400) return;   /* maximo ~2 mensajes/s por jugador */
+    lastChat = now;
     const msg = { id: crypto.randomUUID(), username: player.username, text: raw.trim().slice(0, 240), playerId: socket.id };
     history.push(msg);
     if (history.length > 50) history.shift();
