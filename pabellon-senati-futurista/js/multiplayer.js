@@ -14,7 +14,31 @@
  function line(m){const d=document.createElement('div'),b=document.createElement('b'),t=document.createElement('span');b.textContent=m.username+': ';t.textContent=m.text;d.append(b,t);log.append(d);while(log.children.length>50)log.firstChild.remove();log.scrollTop=log.scrollHeight}
  function sprite(txt){const c=document.createElement('canvas');c.width=512;c.height=128;const x=c.getContext('2d');x.fillStyle='rgba(5,12,24,.86)';x.fillRect(0,0,512,128);x.fillStyle='white';x.textAlign='center';x.font='bold 32px Arial';x.fillText(txt.slice(0,32),256,70);const tex=new THREE.CanvasTexture(c);return new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false}))}
  function add(p){let a=rem.get(p.id);if(!a){const g=new THREE.Group(),body=new THREE.Mesh(new THREE.CylinderGeometry(.28,.28,1,12),new THREE.MeshStandardMaterial({color:0x2d6cdf})),head=new THREE.Mesh(new THREE.SphereGeometry(.22,12,10),new THREE.MeshStandardMaterial({color:0xe9bd93}));body.position.y=.85;head.position.y=1.55;g.add(body,head);const n=sprite(p.username);n.scale.set(2.4,.6,1);n.position.y=2.08;g.add(n);scene.add(g);a={g,t:{}};rem.set(p.id,a)}Object.assign(a.t,{x:p.x,y:p.y,z:p.z,yaw:p.yaw})}
- function del(id){const a=rem.get(id);if(a){scene.remove(a.g);a.g.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){if(o.material.map)o.material.map.dispose();o.material.dispose()}});rem.delete(id)}const b=bubs.get(id);if(b){if(b.parent)b.parent.remove(b);b.material.map.dispose();b.material.dispose();bubs.delete(id)}clearTimeout(timers.get(id));timers.delete(id)}
+  function del(id) {
+  clearTimeout(timers.get(id));
+  timers.delete(id);
+
+  const b = bubs.get(id);
+  if (b) {
+   if (b.parent) b.parent.remove(b);
+   b.material.map.dispose();
+   b.material.dispose();
+   bubs.delete(id);
+  }
+
+  const avatar = rem.get(id);
+  if (!avatar) return;
+
+  scene.remove(avatar.g);
+  avatar.g.traverse(obj => {
+   if (obj.isMesh) obj.geometry.dispose();
+   if (obj.material) {
+    if (obj.material.map) obj.material.map.dispose();
+    obj.material.dispose();
+   }
+  });
+  rem.delete(id);
+ }
  function bubble(id,txt){const a=rem.get(id);if(!a)return;const old=bubs.get(id);if(old){a.g.remove(old);old.material.map.dispose();old.material.dispose()}const b=sprite(txt);b.scale.set(2.3,.6,1);b.position.y=2.75;a.g.add(b);bubs.set(id,b);clearTimeout(timers.get(id));timers.set(id,setTimeout(()=>{if(bubs.get(id)===b){a.g.remove(b);b.material.map.dispose();b.material.dispose();bubs.delete(id);timers.delete(id)}},6000))}
  function showLocal(txt){if(localBubble)localBubble.remove();const el=document.createElement('div');el.className='mpbubble';el.textContent=txt;el.style.cssText='position:fixed;left:50%;top:calc(50% - 100px);transform:translateX(-50%);z-index:29';document.body.append(el);localBubble=el;clearTimeout(localTimer);localTimer=setTimeout(()=>{el.remove();if(localBubble===el)localBubble=null},6000)}
  const socketURL=window.MULTIPLAYER_SOCKET_URL||((location.protocol==='file:'?'http://localhost':location.protocol+'//'+location.hostname)+':3001');
@@ -34,7 +58,10 @@
    so.on('connect_error',e=>setState(e.message==='AUTH_REQUIRED'?'Sesión iniciada, pero el servidor rechazó el token: reinicia "npm start" para que lea el mismo secreto que PHP (auth/secret.local.php).':'Sesión iniciada, pero no hay servidor multijugador en '+socketURL+'. Ejecuta "npm start" en la carpeta del proyecto.',false));
    so.on('world:init',w=>{log.textContent='';w.players.filter(p=>p.id!==w.selfId).forEach(add);w.history.forEach(line)});
    so.on('player:joined',add);so.on('player:moved',add);so.on('player:left',del);
-   so.on('chat:message',m=>{line(m);if(m.username===d.username)showLocal(m.text);else bubble(m.playerId,m.text)});
+      so.on('chat:message', m => {
+    line(m);
+    if (m.playerId !== so.id) bubble(m.playerId, m.text);
+   });
    function tick(){if(so&&so.connected){const now=performance.now(),p={x:P.x,y:P.y,z:P.z,yaw:P.yaw},moved=!last||Math.abs(p.x-last.x)>.015||Math.abs(p.y-last.y)>.015||Math.abs(p.z-last.z)>.015||Math.abs(p.yaw-last.yaw)>.02;if(moved&&now-lastAt>=60){so.volatile.emit('player:move',p);last=p;lastAt=now}rem.forEach(a=>{a.g.position.x+=(a.t.x-a.g.position.x)*.22;a.g.position.y+=(a.t.y-a.g.position.y)*.22;a.g.position.z+=(a.t.z-a.g.position.z)*.22;const q=Math.atan2(Math.sin(a.t.yaw-a.g.rotation.y),Math.cos(a.t.yaw-a.g.rotation.y));a.g.rotation.y+=q*.22})}requestAnimationFrame(tick)}tick();
   }).catch(()=>setState('Sesión iniciada, pero no se pudo cargar el cliente de Socket.io desde '+socketURL+'. Ejecuta "npm start".',false));
  }
