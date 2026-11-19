@@ -17,19 +17,34 @@
  function del(id){const a=rem.get(id);if(a){scene.remove(a.g);a.g.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){if(o.material.map)o.material.map.dispose();o.material.dispose()}});rem.delete(id)}const b=bubs.get(id);if(b){if(b.parent)b.parent.remove(b);b.material.map.dispose();b.material.dispose();bubs.delete(id)}clearTimeout(timers.get(id));timers.delete(id)}
  function bubble(id,txt){const a=rem.get(id);if(!a)return;const old=bubs.get(id);if(old){a.g.remove(old);old.material.map.dispose();old.material.dispose()}const b=sprite(txt);b.scale.set(2.3,.6,1);b.position.y=2.75;a.g.add(b);bubs.set(id,b);clearTimeout(timers.get(id));timers.set(id,setTimeout(()=>{if(bubs.get(id)===b){a.g.remove(b);b.material.map.dispose();b.material.dispose();bubs.delete(id);timers.delete(id)}},6000))}
  function showLocal(txt){if(localBubble)localBubble.remove();const el=document.createElement('div');el.className='mpbubble';el.textContent=txt;el.style.cssText='position:fixed;left:50%;top:calc(50% - 100px);transform:translateX(-50%);z-index:29';document.body.append(el);localBubble=el;clearTimeout(localTimer);localTimer=setTimeout(()=>{el.remove();if(localBubble===el)localBubble=null},6000)}
- fetch('auth/session.php',{credentials:'same-origin',cache:'no-store'}).then(r=>{if(!r.ok)throw Error('AUTH');return r.json()}).then(d=>{
-  userline.textContent='Cuenta: '+d.username+' ';
-  const logout=document.createElement('a');logout.href='auth/logout.php';logout.textContent='Salir';userline.append(logout);
-  setState('Conectando al servidor multijugador...',false);
-  so=io(window.MULTIPLAYER_SOCKET_URL||'http://localhost:3001',{auth:{token:d.token}});
-  so.on('connect',()=>{setState('Conectado como '+d.username+'. Ya puedes enviar mensajes.',true);input.placeholder='Escribe un mensaje...'});
-  so.on('disconnect',()=>setState('Conexión perdida. Reconectando...',false));
-  so.on('connect_error',e=>setState(e.message==='AUTH_REQUIRED'?'La sesión venció. Inicia sesión otra vez.':'Sesión iniciada, pero el servidor del juego no responde. Verifica que Node.js esté activo.',false));
-  so.on('world:init',w=>{w.players.filter(p=>p.id!==w.selfId).forEach(add);w.history.forEach(line)});
-  so.on('player:joined',add);so.on('player:moved',add);so.on('player:left',del);
-  so.on('chat:message',m=>{line(m);if(m.username===d.username)showLocal(m.text);else bubble(m.playerId,m.text)});
-  function tick(){if(so&&so.connected){const now=performance.now(),p={x:P.x,y:P.y,z:P.z,yaw:P.yaw},moved=!last||Math.abs(p.x-last.x)>.015||Math.abs(p.y-last.y)>.015||Math.abs(p.z-last.z)>.015||Math.abs(p.yaw-last.yaw)>.02;if(moved&&now-lastAt>=60){so.volatile.emit('player:move',p);last=p;lastAt=now}rem.forEach(a=>{a.g.position.x+=(a.t.x-a.g.position.x)*.22;a.g.position.y+=(a.t.y-a.g.position.y)*.22;a.g.position.z+=(a.t.z-a.g.position.z)*.22;const q=Math.atan2(Math.sin(a.t.yaw-a.g.rotation.y),Math.cos(a.t.yaw-a.g.rotation.y));a.g.rotation.y+=q*.22})}requestAnimationFrame(tick)}tick();
- }).catch(()=>{setState('Inicia sesión en una cuenta del visor 3D para poder hablar por el chat.',false);userline.innerHTML='<a href="auth/login.php">Iniciar sesión</a> · <a href="auth/register.php">Crear cuenta</a>'});
+ const socketURL=window.MULTIPLAYER_SOCKET_URL||((location.protocol==='file:'?'http://localhost':location.protocol+'//'+location.hostname)+':3001');
+ const loginLinks='<a href="auth/login.php">Iniciar sesión</a> · <a href="auth/register.php">Crear cuenta</a>';
+ let started=false;
+ function toast(txt){const el=document.createElement('div');el.textContent=txt;el.style.cssText='position:fixed;left:50%;top:18px;transform:translateX(-50%);z-index:40;background:#0b3d24ee;color:#fff;border:1px solid #3ddc84;border-radius:10px;padding:10px 16px;font:14px Arial;box-shadow:0 4px 18px #0008';document.body.append(el);setTimeout(()=>el.remove(),4500)}
+ function getSession(){return fetch('auth/session.php',{credentials:'same-origin',cache:'no-store'}).then(r=>r.json().catch(()=>({})).then(d=>({status:r.status,data:d})))}
+ function loadIO(){return window.io?Promise.resolve():new Promise((ok,fail)=>{const s=document.createElement('script');s.src=socketURL+'/socket.io/socket.io.js';s.onload=ok;s.onerror=fail;document.head.append(s)})}
+ function showAccount(name){userline.textContent='Cuenta: '+name+' ';const a=document.createElement('a');a.href='auth/logout.php';a.textContent='Salir';userline.append(a)}
+ function start(d){
+  if(started)return;started=true;
+  loadIO().then(()=>{
+   setState('Conectando al servidor multijugador...',false);
+   so=io(socketURL,{auth:cb=>{getSession().then(r=>cb({token:(r.data&&r.data.token)||''})).catch(()=>cb({token:''}))}});
+   so.on('connect',()=>{setState('Conectado como '+d.username+'. Ya puedes enviar mensajes.',true);input.placeholder='Escribe un mensaje...'});
+   so.on('disconnect',()=>{setState('Conexión perdida. Reconectando...',false);Array.from(rem.keys()).forEach(del);last=null});
+   so.on('connect_error',e=>setState(e.message==='AUTH_REQUIRED'?'Sesión iniciada, pero el servidor rechazó el token: reinicia "npm start" para que lea el mismo secreto que PHP (auth/secret.local.php).':'Sesión iniciada, pero no hay servidor multijugador en '+socketURL+'. Ejecuta "npm start" en la carpeta del proyecto.',false));
+   so.on('world:init',w=>{log.textContent='';w.players.filter(p=>p.id!==w.selfId).forEach(add);w.history.forEach(line)});
+   so.on('player:joined',add);so.on('player:moved',add);so.on('player:left',del);
+   so.on('chat:message',m=>{line(m);if(m.username===d.username)showLocal(m.text);else bubble(m.playerId,m.text)});
+   function tick(){if(so&&so.connected){const now=performance.now(),p={x:P.x,y:P.y,z:P.z,yaw:P.yaw},moved=!last||Math.abs(p.x-last.x)>.015||Math.abs(p.y-last.y)>.015||Math.abs(p.z-last.z)>.015||Math.abs(p.yaw-last.yaw)>.02;if(moved&&now-lastAt>=60){so.volatile.emit('player:move',p);last=p;lastAt=now}rem.forEach(a=>{a.g.position.x+=(a.t.x-a.g.position.x)*.22;a.g.position.y+=(a.t.y-a.g.position.y)*.22;a.g.position.z+=(a.t.z-a.g.position.z)*.22;const q=Math.atan2(Math.sin(a.t.yaw-a.g.rotation.y),Math.cos(a.t.yaw-a.g.rotation.y));a.g.rotation.y+=q*.22})}requestAnimationFrame(tick)}tick();
+  }).catch(()=>setState('Sesión iniciada, pero no se pudo cargar el cliente de Socket.io desde '+socketURL+'. Ejecuta "npm start".',false));
+ }
+ getSession().then(({status,data:d})=>{
+  if(status===401||!d.authenticated){setState('Inicia sesión en una cuenta del visor 3D para poder hablar por el chat.',false);userline.innerHTML=loginLinks;return}
+  showAccount(d.username);
+  if(/[?&]sesion=ok/.test(location.search)){toast('Sesión iniciada como '+d.username);history.replaceState(null,'',location.pathname+location.hash)}
+  if(!d.token){setState('Sesión iniciada como '+d.username+', pero el multijugador no está configurado: '+(d.error||'falta el secreto compartido')+'.',false);return}
+  start(d);
+ }).catch(()=>{setState('No se pudo consultar la sesión. Abre el visor desde Laragon (http://localhost/...), no con doble clic en index.html.',false);userline.innerHTML=loginLinks});
  panel.querySelector('form').addEventListener('submit',e=>{e.preventDefault();const text=input.value.trim();if(!text)return;if(!so||!so.connected){setState('Conéctate al multijugador para enviar.',false);return}so.emit('chat:send',text);input.value='';input.focus()});
  addEventListener('beforeunload',()=>{Array.from(rem.keys()).forEach(del);timers.forEach(t=>clearTimeout(t));clearTimeout(localTimer);if(so)so.disconnect()});
 })();
