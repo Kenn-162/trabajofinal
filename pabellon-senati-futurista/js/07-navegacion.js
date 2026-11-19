@@ -20,7 +20,7 @@ function walkStep(dt){const sp=(keys.shift?4.5:2.2)*dt,fw=(keys.w||keys.arrowup?
  const nx=P.x+dx*sp,nz=P.z+dz*sp;if(!blocked(nx,P.z,f))P.x=Math.max(-150,Math.min(150,nx));if(!blocked(P.x,nz,f))P.z=Math.max(-175,Math.min(98,nz));
  const zn=zones.find(q=>P.x>q[0]&&P.x<q[1]&&P.z*q[2]>CW&&P.z*q[2]<q[3]+1);if(zn){P.y=Math.max(0,Math.min(3,(zn[3]-P.z*zn[2])/5.4*3));P.fl=P.y>1.5?2:1}else P.y=P.fl==2?3:0;
  camera.position.set(P.x,P.y+1.65,P.z);camera.rotation.set(P.pitch,P.yaw,0,'YXZ')}
-addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=1;if(e.key.startsWith('Arrow'))e.preventDefault()});addEventListener('keyup',e=>keys[e.key.toLowerCase()]=0);
+const typingTarget=e=>e.target&&e.target.closest&&e.target.closest('input,textarea,select,[contenteditable="true"]');addEventListener('keydown',e=>{if(typingTarget(e))return;keys[e.key.toLowerCase()]=1;if(e.key.startsWith('Arrow'))e.preventDefault()});addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=0});
 pad.querySelectorAll('button').forEach(b=>{const k=b.dataset.k;b.onpointerdown=()=>keys[k]=1;b.onpointerup=b.onpointerleave=()=>keys[k]=0});
 let d0=null,drag=false;const cv=renderer.domElement;
 cv.addEventListener('pointerdown',e=>{d0={x:e.clientX,y:e.clientY};drag=false});
