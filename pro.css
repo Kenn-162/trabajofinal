@@ -1,0 +1,52 @@
+/* ════════════════════════════════════════════════════════════
+   Apartados profesionales: ficha del proyecto + modo eliminar
+   Misma piel HUD que styles.css (oro SENATI · cian · navy)
+   ════════════════════════════════════════════════════════════ */
+#del.on{background:linear-gradient(180deg,#ff6a5e,#c4231a);border-color:#ff9d94;box-shadow:0 0 0 1px rgba(255,122,112,.5),0 0 18px rgba(255,90,78,.45)}
+#undo,#del{border-radius:10px;padding:9px 14px}
+
+#pro{position:fixed;right:12px;top:calc(12px + env(safe-area-inset-top,0px));z-index:10;width:252px;
+  padding:12px 14px;border-radius:16px;border:1px solid transparent;
+  background:linear-gradient(var(--panel),var(--panel)) padding-box,
+             linear-gradient(200deg,rgba(56,225,255,.5),rgba(245,183,0,.28) 40%,rgba(45,107,232,.4)) border-box;
+  box-shadow:0 18px 50px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.07);
+  backdrop-filter:blur(14px) saturate(1.25);-webkit-backdrop-filter:blur(14px) saturate(1.25)}
+#pro::before,#pro::after{content:"";position:absolute;width:20px;height:20px;pointer-events:none}
+#pro::before{top:7px;right:7px;border-top:2px solid var(--cyan);border-right:2px solid var(--cyan);border-top-right-radius:10px}
+#pro::after{bottom:7px;left:7px;border-bottom:2px solid var(--acc);border-left:2px solid var(--acc);border-bottom-left-radius:10px}
+#pro summary{font-size:17px;letter-spacing:.09em}
+
+.tabs{display:flex;gap:4px;background:rgba(6,12,28,.6);padding:4px;border-radius:11px;margin:10px 0;border:1px solid rgba(148,197,255,.1)}
+.tabs button{flex:1;border:0;background:transparent;border-radius:8px;padding:6px 2px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.tabs button:hover{color:var(--ink);box-shadow:none;transform:none}
+.tabs button.on{background:linear-gradient(180deg,#2f74ff,#1a4fc4);color:var(--ink);box-shadow:0 2px 10px rgba(47,116,255,.5),inset 0 1px 0 rgba(255,255,255,.3)}
+.pp[hidden]{display:none}
+
+dl{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;margin:0;font-size:12px}
+dt{color:var(--mute);letter-spacing:.03em}
+dd{margin:0;text-align:right;font-weight:600;color:var(--ink)}
+
+.kpi{display:flex;align-items:center;gap:12px;margin-bottom:12px;padding:10px 12px;border-radius:12px;background:rgba(56,225,255,.06);border:1px solid rgba(56,225,255,.18)}
+.kpi strong{font:700 34px/1 'Barlow Condensed',sans-serif;color:var(--acc);text-shadow:0 0 18px rgba(245,183,0,.45)}
+.kpi small{color:var(--mute);font-size:11px;line-height:1.35}
+
+.bar{display:grid;grid-template-columns:64px 1fr 26px;align-items:center;gap:8px;font-size:12px;margin:6px 0}
+.bar i{height:8px;border-radius:5px;background:rgba(148,197,255,.12);position:relative;overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.5)}
+.bar i:after{content:"";position:absolute;inset:0;width:var(--w);background:linear-gradient(90deg,var(--c),rgba(255,255,255,.35));background-color:var(--c);border-radius:5px;transition:width .35s ease;box-shadow:0 0 10px var(--c)}
+.bar b{text-align:right;font-variant-numeric:tabular-nums}
+#pro h3{font:600 11px Barlow,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:var(--cyan);margin:12px 0 6px}
+.wide{width:100%;margin-top:12px;border-radius:10px;padding:10px;letter-spacing:.08em;text-transform:uppercase;font-size:12px;border:1px solid var(--line-2)}
+.wide:hover{border-color:var(--cyan);box-shadow:0 0 16px rgba(56,225,255,.3)}
+
+#toast{position:fixed;left:50%;bottom:calc(26px + env(safe-area-inset-bottom,0px));z-index:20;transform:translate(-50%,16px);
+  background:var(--panel-2);border:1px solid rgba(56,225,255,.4);border-radius:999px;padding:9px 18px;
+  font-size:12.5px;letter-spacing:.05em;color:var(--ink);opacity:0;pointer-events:none;
+  box-shadow:0 10px 34px rgba(0,0,0,.5),0 0 22px rgba(56,225,255,.22);transition:opacity .25s,transform .25s}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media(max-width:900px){#pro{display:none}}
+
+/* ── Selector de calidad gráfica ─────────────────────────── */
+.seg svg .dim{opacity:.28}
+.qinfo{margin:2px 2px 0;font-size:11.5px;line-height:1.45;color:var(--mute)}
+.qinfo b{color:var(--acc);font-weight:700;letter-spacing:.06em;white-space:nowrap;font-variant-numeric:tabular-nums}
