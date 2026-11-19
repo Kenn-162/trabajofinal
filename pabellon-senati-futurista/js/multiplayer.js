@@ -2,10 +2,10 @@
 (()=>{
  const panel=document.createElement('section');
  panel.id='mp';
- panel.innerHTML='<b>CHAT GLOBAL</b><div id="mplog" aria-live="polite"></div><div id="mpstatus">Inicia sesión para habilitar el chat.</div><form><input maxlength="240" placeholder="Escribe un mensaje..." autocomplete="off" disabled><button type="submit" disabled>Enviar</button></form><p id="mpuser"></p>';
+ panel.innerHTML='<b>CHAT GLOBAL</b><div id="mplog" aria-live="polite"></div><div id="mpstatus">Inicia sesión en el visor 3D para poder hablar por el chat.</div><form><input maxlength="240" placeholder="Inicia sesión para hablar" autocomplete="off" disabled><button type="submit" disabled>Enviar</button></form><p id="mpuser"></p>';
  document.body.append(panel);
  const css=document.createElement('style');
- css.textContent='#mp{position:fixed;right:16px;bottom:16px;z-index:30;width:290px;height:290px;background:#081321ed;color:white;border:1px solid #456;border-radius:10px;padding:10px;font:13px Arial;display:flex;flex-direction:column}#mplog{overflow:auto;flex:1;margin:8px 0}#mpstatus{font-size:12px;color:#ffd56b;margin-bottom:6px}#mp form{display:flex;gap:5px}#mp input{min-width:0;flex:1;padding:8px}#mp button{padding:6px 10px}#mpuser{margin:6px 0 0}#mpuser a{color:#59d8ff}.mpbubble{position:absolute;background:#081321e8;color:white;padding:6px 10px;border:1px solid #9bdfff;border-radius:10px;white-space:normal;max-width:180px}.mplabel{font:bold 14px Arial;color:white;text-shadow:0 1px 4px black}';
+ css.textContent='#mp{position:fixed;right:16px;bottom:16px;z-index:30;width:290px;height:290px;background:#081321ed;color:white;border:1px solid #456;border-radius:10px;padding:10px;font:13px Arial;display:flex;flex-direction:column}#mplog{overflow:auto;flex:1;margin:8px 0}#mpstatus{font-size:12px;color:#ffd56b;background:#2b2414;border:1px solid #765d1c;border-radius:6px;padding:7px;margin-bottom:6px}#mp form{display:flex;gap:5px}#mp input{min-width:0;flex:1;padding:8px}#mp button{padding:6px 10px}#mpuser{margin:6px 0 0}#mpuser a{color:#59d8ff}.mpbubble{position:absolute;background:#081321e8;color:white;padding:6px 10px;border:1px solid #9bdfff;border-radius:10px;white-space:normal;max-width:180px}.mplabel{font:bold 14px Arial;color:white;text-shadow:0 1px 4px black}';
  document.head.append(css);
  const log=document.querySelector('#mplog'),status=document.querySelector('#mpstatus'),input=panel.querySelector('input'),send=panel.querySelector('button'),userline=document.querySelector('#mpuser');
  let so=null,last=null,lastAt=0,localBubble=null,localTimer=null;
@@ -22,14 +22,14 @@
   const logout=document.createElement('a');logout.href='auth/logout.php';logout.textContent='Salir';userline.append(logout);
   setState('Conectando al servidor multijugador...',false);
   so=io(window.MULTIPLAYER_SOCKET_URL||'http://localhost:3001',{auth:{token:d.token}});
-  so.on('connect',()=>setState('Conectado: '+d.username,true));
+  so.on('connect',()=>{setState('Conectado como '+d.username+'. Ya puedes enviar mensajes.',true);input.placeholder='Escribe un mensaje...'});
   so.on('disconnect',()=>setState('Conexión perdida. Reconectando...',false));
-  so.on('connect_error',e=>setState(e.message==='AUTH_REQUIRED'?'La sesión venció. Inicia sesión otra vez.':'Servidor multijugador no disponible.',false));
+  so.on('connect_error',e=>setState(e.message==='AUTH_REQUIRED'?'La sesión venció. Inicia sesión otra vez.':'Sesión iniciada, pero el servidor del juego no responde. Verifica que Node.js esté activo.',false));
   so.on('world:init',w=>{w.players.filter(p=>p.id!==w.selfId).forEach(add);w.history.forEach(line)});
   so.on('player:joined',add);so.on('player:moved',add);so.on('player:left',del);
   so.on('chat:message',m=>{line(m);if(m.username===d.username)showLocal(m.text);else bubble(m.playerId,m.text)});
   function tick(){if(so&&so.connected){const now=performance.now(),p={x:P.x,y:P.y,z:P.z,yaw:P.yaw},moved=!last||Math.abs(p.x-last.x)>.015||Math.abs(p.y-last.y)>.015||Math.abs(p.z-last.z)>.015||Math.abs(p.yaw-last.yaw)>.02;if(moved&&now-lastAt>=60){so.volatile.emit('player:move',p);last=p;lastAt=now}rem.forEach(a=>{a.g.position.x+=(a.t.x-a.g.position.x)*.22;a.g.position.y+=(a.t.y-a.g.position.y)*.22;a.g.position.z+=(a.t.z-a.g.position.z)*.22;const q=Math.atan2(Math.sin(a.t.yaw-a.g.rotation.y),Math.cos(a.t.yaw-a.g.rotation.y));a.g.rotation.y+=q*.22})}requestAnimationFrame(tick)}tick();
- }).catch(()=>{setState('Inicia sesión o crea una cuenta para enviar mensajes.',false);userline.innerHTML='<a href="auth/login.php">Iniciar sesión</a> · <a href="auth/register.php">Crear cuenta</a>'});
+ }).catch(()=>{setState('Inicia sesión en una cuenta del visor 3D para poder hablar por el chat.',false);userline.innerHTML='<a href="auth/login.php">Iniciar sesión</a> · <a href="auth/register.php">Crear cuenta</a>'});
  panel.querySelector('form').addEventListener('submit',e=>{e.preventDefault();const text=input.value.trim();if(!text)return;if(!so||!so.connected){setState('Conéctate al multijugador para enviar.',false);return}so.emit('chat:send',text);input.value='';input.focus()});
  addEventListener('beforeunload',()=>{Array.from(rem.keys()).forEach(del);timers.forEach(t=>clearTimeout(t));clearTimeout(localTimer);if(so)so.disconnect()});
 })();
