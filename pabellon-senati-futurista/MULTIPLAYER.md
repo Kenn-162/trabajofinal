@@ -16,3 +16,6 @@ Salto y globos de chat
 - La posicion vertical enviada a los demas es y = suelo + salto, dentro del mismo envio limitado a ~16 por segundo y solo con cambios reales (al aterrizar se manda una ultima posicion exacta).
 - El globo de texto se dibuja unicamente sobre los OTROS jugadores (6 s, y se reinicia si escriben otro mensaje). Tu propio mensaje aparece solo en el historial del chat global.
 - El servidor limita ~25 movimientos/s y ~2 mensajes/s por jugador y acota las coordenadas.
+
+## Aspecto del personaje
+Cada `player:move` puede incluir `look: {f, o, t, h}` (género 0-1, skin 0-5, piel 0-3, cabello 0-5). El servidor lo valida (solo enteros en rango) y lo reenvía en `player:moved` / `player:joined` / `world:init`. Sin `look`, el cliente usa un aspecto por defecto derivado del nombre de usuario.

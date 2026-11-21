@@ -72,11 +72,16 @@ io.on('connection', socket => {
      (y = suelo 0 / piso 2 en 3 m + salto, de ahi el limite). */
   let lastMove = 0, lastChat = 0;
   const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
+  /* Aspecto del personaje {f genero 0-1, o skin 0-5, t piel 0-3, h cabello 0-5}: solo enteros dentro de rango. */
+  const int = (n, max) => (Number.isInteger(n) && n >= 0 && n <= max ? n : 0);
+  const cleanLook = l => (l && typeof l === 'object' ? { f: int(l.f, 1), o: int(l.o, 5), t: int(l.t, 3), h: int(l.h, 5) } : undefined);
   socket.on('player:move', v => {
     if (!v || ![v.x, v.y, v.z, v.yaw].every(Number.isFinite)) return;
     const now = Date.now();
     if (now - lastMove < 40) return;
     lastMove = now;
+    const look = cleanLook(v.look);
+    if (look) player.look = look;
     Object.assign(player, { x: clamp(v.x, -200, 200), y: clamp(v.y, -1, 6), z: clamp(v.z, -200, 200), yaw: v.yaw % (Math.PI * 2) });
     socket.broadcast.volatile.emit('player:moved', player);
   });

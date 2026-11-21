@@ -8,15 +8,18 @@
  css.textContent='#mp{position:fixed;right:16px;bottom:16px;z-index:30;width:290px;height:290px;background:#081321ed;color:white;border:1px solid #456;border-radius:10px;padding:10px;font:13px Arial;display:flex;flex-direction:column}#mplog{overflow:auto;flex:1;margin:8px 0}#mpstatus{font-size:12px;color:#ffd56b;background:#2b2414;border:1px solid #765d1c;border-radius:6px;padding:7px;margin-bottom:6px}#mp form{display:flex;gap:5px}#mp input{min-width:0;flex:1;padding:8px}#mp button{padding:6px 10px}#mpuser{margin:6px 0 0}#mpuser a{color:#59d8ff}.mplabel{font:bold 14px Arial;color:white;text-shadow:0 1px 4px black}';
  document.head.append(css);
  const log=document.querySelector('#mplog'),status=document.querySelector('#mpstatus'),input=panel.querySelector('input'),send=panel.querySelector('button'),userline=document.querySelector('#mpuser');
- let so=null,last=null,lastAt=0,lastFrame=performance.now();
+ let so=null,last=null,lastLook='',lastAt=0,lastFrame=performance.now();
  const rem=new Map(),bubs=new Map(),timers=new Map();
  function setState(message,connected){status.textContent=message;input.disabled=!connected;send.disabled=!connected}
  function line(m){const d=document.createElement('div'),b=document.createElement('b'),t=document.createElement('span');b.textContent=m.username+': ';t.textContent=m.text;d.append(b,t);log.append(d);while(log.children.length>50)log.firstChild.remove();log.scrollTop=log.scrollHeight}
  function sprite(txt){const c=document.createElement('canvas');c.width=512;c.height=128;const x=c.getContext('2d');x.fillStyle='rgba(5,12,24,.86)';x.fillRect(0,0,512,128);x.fillStyle='white';x.textAlign='center';x.font='bold 32px Arial';x.fillText(txt.slice(0,32),256,70);const tex=new THREE.CanvasTexture(c);return new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false}))}
  /* Los demás jugadores usan el mismo avatar que el tuyo (jugador.js): el aspecto sale de su nombre de usuario,
     así que todos ven a cada persona igual, y camina/corre según la velocidad que se calcula entre cuadros. */
- function add(p){let a=rem.get(p.id);if(!a){const g=window.crearAvatar(p.username,true);
-   g.name='mp-jugador';g.position.set(p.x,p.y,p.z);g.rotation.y=p.yaw;scene.add(g);a={g,t:{},sp:0,px:p.x,pz:p.z};rem.set(p.id,a)}Object.assign(a.t,{x:p.x,y:p.y,z:p.z,yaw:p.yaw})}
+ function add(p){let a=rem.get(p.id);if(!a){const g=window.crearAvatar(p.username,true,p.look);
+   g.name='mp-jugador';g.position.set(p.x,p.y,p.z);g.rotation.y=p.yaw;scene.add(g);a={g,t:{},sp:0,px:p.x,pz:p.z,lk:claveAspecto(p.look)};rem.set(p.id,a)}
+  /* si ese jugador cambió de género/skin, se rehace su modelo (sin look = aspecto por defecto según su nombre) */
+  else if(claveAspecto(p.look)!==a.lk){a.lk=claveAspecto(p.look);window.cambiarAspecto(a.g,p.username,p.look)}
+  Object.assign(a.t,{x:p.x,y:p.y,z:p.z,yaw:p.yaw})}
   function del(id) {
   clearTimeout(timers.get(id));
   timers.delete(id);
@@ -62,10 +65,12 @@
     const now=performance.now(),dt=Math.min((now-lastFrame)/1000,.1);lastFrame=now;
     if(!so||!so.connected)return;
     const p={x:P.x,y:P.y+(window.JUMP?JUMP.h:0),z:P.z,yaw:window.PJ?PJ.bodyYaw:P.yaw};   /* y incluye el salto; yaw = hacia dónde mira tu cuerpo */
+    if(window.PJ&&PJ.look)p.look=PJ.look;                              /* género + skin: el servidor lo valida y lo reenvía a los demás */
+    const lookKey=window.PJ?claveAspecto(PJ.look):'';
     const diff=last?Math.max(Math.abs(p.x-last.x),Math.abs(p.y-last.y),Math.abs(p.z-last.z),Math.abs(p.yaw-last.yaw)):1;
-    const moved=!last||Math.abs(p.x-last.x)>.015||Math.abs(p.y-last.y)>.015||Math.abs(p.z-last.z)>.015||Math.abs(p.yaw-last.yaw)>.02;
+    const moved=!last||lookKey!==lastLook||Math.abs(p.x-last.x)>.015||Math.abs(p.y-last.y)>.015||Math.abs(p.z-last.z)>.015||Math.abs(p.yaw-last.yaw)>.02;
     /* throttle: como mucho cada 60 ms (~16/s) y solo con cambio real; si quedo un resto sin enviar, un ultimo envio exacto al parar */
-    if((moved||diff>0)&&now-lastAt>=(moved?60:150)){so.volatile.emit('player:move',p);last=p;lastAt=now}
+    if((moved||diff>0)&&now-lastAt>=(moved?60:150)){so.volatile.emit('player:move',p);last=p;lastLook=lookKey;lastAt=now}
     const k=1-Math.exp(-14*dt);                                        /* lerp suave, igual a cualquier FPS */
     rem.forEach(a=>{const g=a.g;g.position.x+=(a.t.x-g.position.x)*k;g.position.y+=(a.t.y-g.position.y)*k;g.position.z+=(a.t.z-g.position.z)*k;
      g.rotation.y+=Math.atan2(Math.sin(a.t.yaw-g.rotation.y),Math.cos(a.t.yaw-g.rotation.y))*k;

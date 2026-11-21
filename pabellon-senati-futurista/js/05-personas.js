@@ -14,7 +14,7 @@ function person(type,seated){const T=TY[type],p=new THREE.Group(),skin=[0xf1c9a5
  p.scale.setScalar(T.h/1.7*(.95+Math.random()*.1));p.userData={legs,arms,type,seated};return p}
 /* personas más realistas */
 const cyl=(a,b,h,s=10)=>new THREE.CylinderGeometry(a,b,h,s),SP=new THREE.SphereGeometry(1,14,12);
-const TY2={alumno:{top:0x1b4fd8,bot:0x0e0f12,h:1.68},profesor:{top:0xe9edf2,bot:0x2b2e36,h:1.78},persona:{top:0xd9822b,bot:0x3a5a8c,h:1.7},limpieza:{top:0x2fa24f,bot:0x1d7a3b,h:1.68}};let logoMat=null;
+const TY2={alumno:{top:0x1b4fd8,bot:0x0e0f12,h:1.68},profesor:{top:0xe9edf2,bot:0x2b2e36,h:1.78},persona:{top:0xd9822b,bot:0x3a5a8c,h:1.7},limpieza:{top:0x2fa24f,bot:0x1d7a3b,h:1.68},deportista:{top:0xd62f2f,bot:0x14161a,h:1.7},mecanico:{top:0x2f3b52,bot:0x2f3b52,h:1.7}};let logoMat=null;
 /* `look` (opcional) fija el aspecto: {skin,hair,fem,pack,scale}. Sin él cada persona sale aleatoria (como antes).
    Lo usa jugador.js para que tu avatar (y los de otros jugadores) se vean siempre igual. */
 const SKINS=[0xf1c9a5,0xd9a47a,0xb97a52,0x8a5a3a],HAIRS=[0x14110f,0x2b1d12,0x4a3524,0x777777];
@@ -30,8 +30,12 @@ function person(type,seated,look){look=look||{};const T=TY2[type],p=new THREE.Gr
  if(type=='alumno'){if(!logoMat)logoMat=new THREE.MeshBasicMaterial({map:tex(64,64,(c,w,h)=>{logo(c,32,32,26,'#fff')}),transparent:true});
   const lg=new THREE.Mesh(new THREE.PlaneGeometry(.075,.075),logoMat);lg.position.set(.09,hy+.45,.13);p.add(lg);if(look.pack!==undefined?look.pack:Math.random()<.5)mk(bg,0x15171b,0,hy+.32,-.17,p,.3,.4,.12)}
  if(type=='limpieza')mk(cyl(.12,.12,.06),0x1f7a3a,0,hy+.9,0);
+ if(type=='mecanico')mk(SP,0xf5c400,0,hy+.85,0,p,.125,.085,.13);                       /* casco amarillo */
+ if(type=='deportista')mk(bg,0xffffff,0,hy+.45,.115,p,.3,.05,.02);                  /* franja blanca en el pecho */
  if(type=='profesor')mk(bg,0x7a1f1f,0,hy+.38,.12,p,.05,.28,.02);
- p.scale.setScalar(T.h/1.7*(look.scale!==undefined?look.scale:.95+Math.random()*.1));p.userData={legs,arms,type,seated};return p}
+ p.scale.setScalar(T.h/1.7*(look.scale!==undefined?look.scale:.95+Math.random()*.1));
+ if(look.fem!==undefined&&fem)p.scale.x*=.92;                                          /* aspecto femenino elegido: hombros algo más estrechos (la gente aleatoria no cambia) */
+ p.userData={legs,arms,type,seated};return p}
 const people=[],walkers=[];
 const cnt=()=>{document.getElementById('cnt').textContent=people.length+' personas';if(typeof updStats==='function')updStats()};
 function put(f,type,x,z,ry,seated){const p=person(type,seated);p.position.set(x,0,z);p.rotation.y=ry;g[f].add(p);people.push(p);cnt();return p}
