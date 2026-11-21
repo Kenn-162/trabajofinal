@@ -57,6 +57,7 @@ En GPU por software, **Alta** se limita sola (sin DoF, ×1 y captura Full HD) pa
 - **Vista general / Planta / Recorrer**: órbita, cenital o primera persona (WASD / flechas, **Shift** corre, **Espacio** salta; táctil: arrastra, pad en pantalla y botones Correr / Cámara). **Recorrer incluye colisión contra todos los edificios** (pirámide, auditorio, comedor, artes gráficas, mecánica, anexo y Torres A/B/C): no se atraviesan muros.
 - **Cámara al recorrer**: **1ª persona** o **3ª persona** (tecla **V** o botones del panel; la rueda acerca/aleja en 3ª persona y la cámara se acorta sola si hay un muro). En 3ª persona ves **tu propio personaje**: el mismo modelo de alumno SENATI que el resto de la gente, con aspecto estable derivado de tu nombre de usuario (los demás jugadores te ven igual) y animación de caminar, correr y saltar. Tu preferencia de cámara se recuerda.
 - **Mi personaje** (panel izquierdo): elige **Hombre / Mujer**, una **skin** de ropa (Alumno, Profesor, Casual, Mantenimiento, Deportivo, Mecánico), el **tono de piel** (4) y el **cabello** (6 colores). Se guarda en tu navegador y, con el multijugador activo, los demás te ven igual (hay que reiniciar `npm start` para que el servidor reenvíe el aspecto). Botón **Verme en 3ª persona** para comprobarlo.
+- **Agacharse**: tecla **C** (o botón Agachar en táctil). Los ojos bajan, el avance se limita a ~1 m/s (sin correr) y tu personaje se ve agachado en 3ª persona y para los demás jugadores. Espacio te levanta y salta.
 - **Correr**: Shift acelera de 2,3 a 5,8 m/s con aceleración y frenado suaves; el campo de visión se abre y, en 1ª persona, hay un balanceo de cabeza sutil. La diagonal ya no es más rápida.
 - **Encuadre**: **Aérea** (dron sobre el campus), **Calle** (a pie, eje del INGRESO SENATI) y **Foto** (postal fachada + pirámide).
 - **Ambiente**: **Día** / **Atardecer** / **Noche**.
@@ -72,6 +73,7 @@ En GPU por software, **Alta** se limita sola (sin DoF, ×1 y captura Full HD) pa
 - `js/04b-cerco-verde.js`: área verde y más autos en la playa de pérgolas + **cerco metálico azul perimetral** (paños de malla, portón de ingreso 3540, enredadera con flores lilas).
 - `js/08-calidad.js`: selector de calidad Alta/Media/Baja (resolución, sombras, DoF, bloom, grano y captura).
 - `js/jugador.js`: tu avatar (mismo diseño que las demás personas), cámara 1ª/3ª persona, animación y extras de correr. También dibuja y anima a los otros jugadores del multijugador.
+- `js/npc.js`: comportamiento de cada rol para las personas que colocas o salen de «Poblar aulas»: el alumno pasea y charla (sentado, teclea), el profesor recorre un tramo y explica con el brazo levantado, el conserje barre con su escoba y la persona camina más lejos. Respetan las paredes.
 - `js/salto.js`: salto con Espacio. `js/multiplayer.js`: chat y jugadores en línea (ver `MULTIPLAYER.md`).
 - `js/features.js`: eliminar de a una, ficha del proyecto, ocupación y captura.
 - `vendor/`: three.js r128 + OrbitControls + EffectComposer/UnrealBloomPass/GammaCorrectionShader/**BokehShader/BokehPass** (licenciados MIT por three.js).
@@ -82,6 +84,7 @@ La metodología completa para repetir este upgrade en cualquier escena three.js 
 
 
 ## Últimos cambios
+- **NPC con vida, agacharse y torre nueva:** cada rol se mueve según su función, tecla C para agacharse y las torres A/B/C replican la torre SENATI de las fotos (concreto gris, columnas altas con logo, fachada de vidrio con cruces de acero y losas claras, corona abierta en la azotea).
 - **Personaje propio y cámaras:** avatar con el diseño de las demás personas, vista en 1ª / 3ª persona (V), modo correr mejorado y todo el proyecto reunido en esta carpeta.
 - **Playa de pérgolas (oeste):** franja verde con árboles, isletas con césped entre filas y más autos.
 - **Estacionamiento grande (norte):** ahora solo **motos lineales** (instanciadas, 1–2 por bahía).

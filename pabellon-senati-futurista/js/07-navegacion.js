@@ -20,7 +20,7 @@ const blocked=(x,z,f)=>cols[f].some(c=>x>c[0]-.28&&x<c[1]+.28&&z>c[2]-.28&&z<c[3
 const SPD_WALK=2.3,SPD_RUN=5.8;let mvx=0,mvz=0;
 function walkStep(dt){const fw=(keys.w||keys.arrowup?1:0)-(keys.s||keys.arrowdown?1:0),st=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0);
  let ix=-Math.sin(P.yaw)*fw+Math.cos(P.yaw)*st,iz=-Math.cos(P.yaw)*fw-Math.sin(P.yaw)*st;const n=Math.hypot(ix,iz);if(n>1){ix/=n;iz/=n}
- const f=P.y>1.5?1:0,want=!!keys.shift&&fw>=0&&n>0,base=(want?SPD_RUN:SPD_WALK)*(fw<0&&!st?.7:1),k=1-Math.exp(-(n?9:14)*dt);
+ const f=P.y>1.5?1:0,cr=!!(window.PJ&&PJ.crouching),want=!!keys.shift&&fw>=0&&n>0&&!cr,base=(want?SPD_RUN:SPD_WALK)*(fw<0&&!st?.7:1)*(cr?.45:1),k=1-Math.exp(-(n?9:14)*dt);
  mvx+=(ix*base-mvx)*k;mvz+=(iz*base-mvz)*k;
  const nx=P.x+mvx*dt,nz=P.z+mvz*dt;if(!blocked(nx,P.z,f))P.x=Math.max(-150,Math.min(150,nx));else mvx=0;if(!blocked(P.x,nz,f))P.z=Math.max(-175,Math.min(98,nz));else mvz=0;
  P.sp=Math.hypot(mvx,mvz);P.run=want&&P.sp>(SPD_WALK+SPD_RUN)/2;

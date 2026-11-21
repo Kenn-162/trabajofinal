@@ -82,6 +82,7 @@ io.on('connection', socket => {
     lastMove = now;
     const look = cleanLook(v.look);
     if (look) player.look = look;
+    player.c = v.c ? 1 : 0;                                  // agachado
     Object.assign(player, { x: clamp(v.x, -200, 200), y: clamp(v.y, -1, 6), z: clamp(v.z, -200, 200), yaw: v.yaw % (Math.PI * 2) });
     socket.broadcast.volatile.emit('player:moved', player);
   });

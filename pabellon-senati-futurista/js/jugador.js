@@ -3,9 +3,9 @@
    cámara 1ª / 3ª persona y extras del modo correr. Se acopla sin reescribir la navegación:
    envuelve walkStep igual que salto.js. Va DESPUÉS de salto.js y ANTES de multiplayer.js.
 
-   Controles:  V = alternar 1ª / 3ª persona · Shift = correr · Espacio = saltar · Rueda = zoom (3ª persona)
+   Controles:  V = alternar 1ª / 3ª persona · Shift = correr · C = agacharse · Espacio = saltar · Rueda = zoom (3ª persona)
    Exporta:    window.PJ (estado), window.crearAvatar(nombre,etiqueta,look), window.cambiarAspecto(avatar,nombre,look),
-               window.animarAvatar(avatar,vel,dt,aire), window.liberarAvatar(avatar), window.claveAspecto(look)
+               window.animarAvatar(avatar,vel,dt,aire,agachado 0-1), window.liberarAvatar(avatar), window.claveAspecto(look)
                → los usa multiplayer.js para dibujar a los demás jugadores igual que a ti.
 
    Aspecto ("look") = {f:0|1 género, o:0-5 ropa/skin, t:0-3 tono de piel, h:0-5 cabello}.
@@ -53,33 +53,36 @@
  window.crearAvatar=function(nombre,conEtiqueta,look){
   const root=new THREE.Group(),node=new THREE.Group(),model=armModel(nombre,look);
   node.add(model);root.add(node);
-  root.userData.av={node,model,legs:model.userData.legs,arms:model.userData.arms,phase:Math.random()*6,amp:0,air:0,lean:0};
+  root.userData.av={node,model,sy:model.scale.y,legs:model.userData.legs,arms:model.userData.arms,phase:Math.random()*6,amp:0,air:0,lean:0,cr:0};
   if(conEtiqueta)root.add(etiqueta(nombre));
   return root};
  window.cambiarAspecto=function(root,nombre,look){
   const a=root.userData.av;if(!a)return;
   a.node.remove(a.model);liberarAvatar(a.model);
-  const m=armModel(nombre,look);a.node.add(m);a.model=m;a.legs=m.userData.legs;a.arms=m.userData.arms};
+  const m=armModel(nombre,look);a.node.add(m);a.model=m;a.sy=m.scale.y;a.legs=m.userData.legs;a.arms=m.userData.arms};
 
  /* Animación de marcha/carrera: la cadencia y el balanceo crecen con la velocidad; al saltar encoge piernas y sube brazos. */
- window.animarAvatar=function(root,sp,dt,aire){
+ window.animarAvatar=function(root,sp,dt,aire,agach){
   const a=root.userData.av;if(!a)return;
   const moving=sp>.15,run=sp>3.6;
   a.phase+=dt*(moving?3+sp:0);
-  a.amp+=((moving?clamp(.12+sp*.15,0,1):0)-a.amp)*(1-Math.exp(-12*dt));
+  a.cr+=((agach?1:0)*(agach>1?1:agach||0)-a.cr)*(1-Math.exp(-14*dt));                /* 0 de pie · 1 agachado */
+  a.amp+=((moving?clamp(.12+sp*.15,0,1)*(1-.35*a.cr):0)-a.amp)*(1-Math.exp(-12*dt));
   a.air+=((aire>.02?1:0)-a.air)*(1-Math.exp(-18*dt));
   a.lean+=((run?.17:sp>.5?.05:0)-a.lean)*(1-Math.exp(-8*dt));
   const s=Math.sin(a.phase)*a.amp,arm=(run?-.38:0),A=a.air,L=a.legs,R=a.arms;
   L[0].rotation.x=s*(1-A)+(-.6)*A;      L[1].rotation.x=-s*(1-A)+(.25)*A;
   R[0].rotation.x=(-s*.9+arm)*(1-A)+(-1)*A; R[1].rotation.x=(s*.9+arm)*(1-A)+(-1)*A;
-  a.node.rotation.x=-a.lean};                          /* inclinación hacia delante (el frente del modelo es -Z) */
+  /* agachado: el cuerpo se acorta (apoyado en los pies), se inclina hacia delante y los brazos se adelantan */
+  const C=a.cr;a.model.scale.y=a.sy*(1-.34*C);R[0].rotation.x-=.5*C;R[1].rotation.x-=.5*C;
+  a.node.rotation.x=-a.lean-.22*C};                    /* inclinación hacia delante (el frente del modelo es -Z) */
 
  window.liberarAvatar=function(root){root.traverse(o=>{
   if(o.isMesh&&o.geometry!==bg&&o.geometry!==SP)o.geometry.dispose();             /* bg y SP se comparten entre todas las personas */
   if(o.isSprite){if(o.material.map)o.material.map.dispose();o.material.dispose()}})};
 
  /* ── estado compartido ─────────────────────────────────────────────── */
- const PJ=window.PJ={third:lsGet(KEY)==='3',bodyYaw:P.yaw,dist:3.4,cur:3.4,broken:false,look:null};
+ const PJ=window.PJ={third:lsGet(KEY)==='3',bodyYaw:P.yaw,dist:3.4,cur:3.4,broken:false,look:null,crouching:false,crouch:0};
  let custom=null;try{const s=lsGet(KEYL);if(s)custom=normLook(JSON.parse(s))}catch(e){}
  const curLook=()=>custom||Object.assign({o:0},(b=>({f:b.f,t:b.t,h:b.h}))(baseFor(window.PLAYER_NAME||'invitado')));
  PJ.look=curLook();
@@ -127,20 +130,25 @@
    if(mode!=='walk')say('Guardado · pulsa «Verme en 3ª persona» para ver tu personaje')});
   paintLook()}
 
- addEventListener('keydown',e=>{if(e.code!=='KeyV'||e.repeat||e.ctrlKey||e.metaKey||e.altKey||typing(e)||mode!=='walk')return;setCam(!PJ.third)});
+ addEventListener('keydown',e=>{if(e.repeat||e.ctrlKey||e.metaKey||e.altKey||typing(e)||mode!=='walk')return;
+  if(e.code==='KeyV')setCam(!PJ.third);
+  else if(e.code==='KeyC'){PJ.crouching=!PJ.crouching;syncTouch()}                 /* C: agacharse / levantarse */
+  else if(e.code==='Space'&&PJ.crouching){PJ.crouching=false;syncTouch()}});     /* saltar desde agachado = levantarse y saltar */
  cv.addEventListener('wheel',e=>{if(mode!=='walk'||!PJ.third)return;e.preventDefault();PJ.dist=clamp(PJ.dist+e.deltaY*.003,1.6,6.5)},{passive:false});
  /* sin esto, soltar la ventana con Shift pulsado dejaba el personaje corriendo para siempre */
  const releaseKeys=()=>{for(const k in keys)keys[k]=0;syncTouch()};
  addEventListener('blur',releaseKeys);document.addEventListener('visibilitychange',()=>{if(document.hidden)releaseKeys()});
 
- let tRun=null,tCam=null;
- function syncTouch(){if(tRun)tRun.classList.toggle('on',!!keys.shift)}
+ let tRun=null,tCam=null,tCr=null;
+ function syncTouch(){if(tRun)tRun.classList.toggle('on',!!keys.shift);if(tCr)tCr.classList.toggle('on',PJ.crouching)}
  if(coarse){
   tRun=document.createElement('button');tRun.type='button';tRun.className='jug-t';tRun.textContent='Correr';tRun.style.cssText='left:96px;bottom:150px';
   tRun.addEventListener('pointerdown',e=>{e.preventDefault();keys.shift=keys.shift?0:1;syncTouch()});
   tCam=document.createElement('button');tCam.type='button';tCam.className='jug-t';tCam.textContent='Cámara';tCam.style.cssText='left:16px;bottom:214px';
   tCam.addEventListener('pointerdown',e=>{e.preventDefault();setCam(!PJ.third)});
-  document.body.append(tRun,tCam)}
+  tCr=document.createElement('button');tCr.type='button';tCr.className='jug-t';tCr.textContent='Agachar';tCr.style.cssText='left:176px;bottom:150px';
+  tCr.addEventListener('pointerdown',e=>{e.preventDefault();PJ.crouching=!PJ.crouching;syncTouch()});
+  document.body.append(tRun,tCam,tCr)}
 
  /* ── bucle de jugador: envuelve walkStep (ya envuelto por salto.js) ───── */
  const base=window.walkStep;let bob=0;
@@ -154,12 +162,13 @@
   if(PJ.third){if(sp>.35)PJ.bodyYaw=lerpA(PJ.bodyYaw,Math.atan2(-vx,-vz),1-Math.exp(-14*dt))}
   else PJ.bodyYaw=P.yaw;
 
-  me.position.set(P.x,ground,P.z);me.rotation.y=PJ.bodyYaw;animarAvatar(me,sp,dt,J.h);
+  PJ.crouch+=((PJ.crouching?1:0)-PJ.crouch)*(1-Math.exp(-11*dt));if(PJ.crouch<.005&&!PJ.crouching)PJ.crouch=0;
+  me.position.set(P.x,ground,P.z);me.rotation.y=PJ.bodyYaw;animarAvatar(me,sp,dt,J.h,PJ.crouch);
 
   if(PJ.third){
    /* cámara orbital detrás del hombro; la distancia se acorta si hay un muro y vuelve despacio */
    P.pitch=clamp(P.pitch,-.8,.6);
-   const cp=Math.cos(P.pitch),sPt=Math.sin(P.pitch),sy=Math.sin(P.yaw),cy=Math.cos(P.yaw),px=P.x,pz=P.z,py=ground+1.55,side=.35;
+   const cp=Math.cos(P.pitch),sPt=Math.sin(P.pitch),sy=Math.sin(P.yaw),cy=Math.cos(P.yaw),px=P.x,pz=P.z,py=ground+1.55-.6*PJ.crouch,side=.35;
    let free=PJ.dist;
    for(let t=.3;t<=PJ.dist;t+=.15){if(hit(px+sy*cp*t+cy*side,pz+cy*cp*t-sy*side,f)){free=Math.max(.5,t-.25);break}}
    PJ.cur+=(free-PJ.cur)*(1-Math.exp(-(free<PJ.cur?26:5)*dt));
@@ -168,6 +177,7 @@
    me.visible=PJ.cur>.9;                               /* si la cámara queda pegada al cuerpo, se oculta para no ver por dentro */
   }else{
    me.visible=false;                                   /* en 1ª persona no se dibuja el propio cuerpo */
+   camera.position.y-=.62*PJ.crouch;                   /* los ojos bajan al agacharse */
    /* balanceo de cabeza muy sutil al caminar y más marcado al correr (solo en el suelo) */
    if(sp>.3&&J.grounded){bob+=dt*(3+sp);camera.position.y+=Math.sin(bob*2)*(P.run?.035:.016)*clamp(sp/2.3,0,1)}
   }
@@ -194,10 +204,10 @@
   try{
    const w=mode==='walk';
    if(w&&lastMode!=='walk')PJ.cur=PJ.dist;
-   if(!w&&lastMode==='walk'){if(me)me.visible=false;if(camera.fov!==FOV){camera.fov=FOV;camera.updateProjectionMatrix()}}
+   if(!w&&lastMode==='walk'){PJ.crouching=false;PJ.crouch=0;if(me)me.visible=false;if(camera.fov!==FOV){camera.fov=FOV;camera.updateProjectionMatrix()}}
    lastMode=mode;
-   if(tRun)tRun.style.display=tCam.style.display=w?'block':'none';
-   const t=w?'<b>'+(PJ.third?'3ª persona':'1ª persona')+'</b> · '+(P.run?'Corriendo':P.sp>.3?'Caminando':'Quieto')+' <i>· V cámara · Shift correr · Espacio saltar</i>':'';
+   if(tRun)tRun.style.display=tCam.style.display=tCr.style.display=w?'block':'none';
+   const t=w?'<b>'+(PJ.third?'3ª persona':'1ª persona')+'</b> · '+(PJ.crouching?'Agachado':P.run?'Corriendo':P.sp>.3?'Caminando':'Quieto')+' <i>· V cámara · Shift correr · C agacharse · Espacio saltar</i>':'';
    if(t!==last){last=t;hud.innerHTML=t;hud.style.display=w?'block':'none'}
   }catch(e){}
  })();

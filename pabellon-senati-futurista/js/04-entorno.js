@@ -628,33 +628,64 @@ box(0xe8b400,-88.4,26.4,.1,.6,25.2,25.6);
 
 /* ── PALMERAS DEL BORDE SUR + TORRES A/B/C (diagrid) ─────── */
 palm(-13,73,1.0);palm(2,73.5,1.1);palm(17,73,.95);palm(-6,81,1.15);palm(10,81,1.0);palm(24,80.5,.9);
-const diagridTex=tex(512,1024,(c,w,h)=>{c.fillStyle='#141a24';c.fillRect(0,0,w,h);
-  for(let y=0;y<h;y+=62){c.fillStyle='rgba(255,255,255,.16)';c.fillRect(0,y,w,5);c.fillStyle='rgba(0,0,0,.5)';c.fillRect(0,y+5,w,3)}
-  c.strokeStyle='#7d8898';c.lineWidth=16;
-  for(let i=-3;i<8;i++){c.beginPath();c.moveTo(i*128,0);c.lineTo(i*128+256,h);c.stroke();c.beginPath();c.moveTo(i*128+256,0);c.lineTo(i*128,h);c.stroke()}
-  c.strokeStyle='#39414d';c.lineWidth=7;
-  for(let i=-3;i<8;i++){c.beginPath();c.moveTo(i*128+3,0);c.lineTo(i*128+256+3,h);c.stroke();c.beginPath();c.moveTo(i*128+256+3,0);c.lineTo(i*128+3,h);c.stroke()}});
-diagridTex.wrapS=diagridTex.wrapT=THREE.RepeatWrapping;
-const diagridGlow=tex(512,1024,(c,w,h)=>{c.fillStyle='#000';c.fillRect(0,0,w,h);
-  for(let y=20;y<h;y+=62)for(let x=14;x<w;x+=42){if(Math.random()<.34){c.fillStyle=Math.random()<.85?'#ffd694':'#a8d8ff';c.fillRect(x,y,26,20)}}});
-diagridGlow.wrapS=diagridGlow.wrapT=THREE.RepeatWrapping;
-const diagridMats=[];const diagridMat=(rep)=>{const t=diagridTex.clone();t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(rep,rep*2);t.needsUpdate=true;
-  const gl=diagridGlow.clone();gl.wrapS=gl.wrapT=THREE.RepeatWrapping;gl.repeat.set(rep,rep*2);gl.needsUpdate=true;
-  return new THREE.MeshStandardMaterial({map:t,emissive:0xffffff,emissiveMap:gl,emissiveIntensity:.9,roughness:.5,metalness:.18,envMapIntensity:.32})};
-const towerHex=tex(256,256,(c,w,h)=>{c.clearRect(0,0,w,h);logo(c,128,128,92,'#2f6df0')});
-function diagridTower(cx,cz,h,seed){
-  const _dm=diagridMat(2.4);diagridMats.push(_dm);const body=new THREE.Mesh(new THREE.BoxGeometry(23,h,23),_dm);body.position.set(cx,h/2,cz);body.rotation.y=seed;body.castShadow=body.receiveShadow=true;scene.add(body);
-  for(const [dx,dz] of [[-11.2,-11.2],[11.2,-11.2],[-11.2,11.2],[11.2,11.2]])box(0x232a35,cx+dx-1,cx+dx+1,0,h+1.2,cz+dz-1,cz+dz+1);
-  box(0x1b222e,cx-12,cx+12,h,h+2.2,cz-12,cz+12);                       /* ático técnico */
-  box(0x10151d,cx-6.5,cx+6.5,h+2.2,h+5.4,cz-6.5,cz+6.5);
-  cylM(S(0x30363f,.5),.14,.14,7,cx-8,h+3,cz-8,6);cylM(S(0x30363f,.5),.14,.14,9.5,cx+7,h+4,cz+9,6);
-  const hexF=new THREE.Mesh(new THREE.PlaneGeometry(7,7),new THREE.MeshBasicMaterial({map:towerHex,transparent:true}));
-  hexF.position.set(cx,h-6.5,cz-11.56);scene.add(hexF);
-  const hexB=hexF.clone();hexB.position.z=cz+11.56;hexB.rotation.y=Math.PI;scene.add(hexB);
-  box(0x0e2a5e,cx-13,cx+13,0,2.4,cz-13,cz+13);                         /* basamento oscuro */
-  const lobby=new THREE.Mesh(new THREE.PlaneGeometry(10,2.2),new THREE.MeshStandardMaterial({color:0x0b0e14,emissive:0xffd9a0,emissiveIntensity:.5,roughness:.3,metalness:.6,envMapIntensity:.9}));
-  lobby.position.set(cx,1.3,cz-13.06);scene.add(lobby)}
-diagridTower(36,87,44,.04);diagridTower(76,87,52,-.03);diagridTower(114,87,40,.02);
+/* Réplica de la torre SENATI de las fotos: volumen de concreto gris oscuro, una columna vertical ancha (con el
+   logo hexagonal y la palabra SENATI) y otra delgada que sobresalen por encima de la azotea, fachada de vidrio
+   con arriostres en X entre losas claras que salen del plano, y una corona abierta de vigas en la azotea.
+   Las caras laterales son de concreto liso con ranuras verticales. */
+const towerConcTex=tex(256,256,(c,w,h)=>{c.fillStyle='#6d6c6a';c.fillRect(0,0,w,h);noise(c,w,h,160,.045,80,125);
+  c.fillStyle='rgba(0,0,0,.22)';c.fillRect(0,0,3,h);c.fillStyle='rgba(255,255,255,.07)';c.fillRect(3,0,2,h)});   /* ranura vertical cada 256 px */
+towerConcTex.wrapS=towerConcTex.wrapT=THREE.RepeatWrapping;
+/* un "tramo" = 3 vanos de 5 m × 1 piso (3.9 m): vidrio, cruz de acero y losa clara en la base */
+const towerGlassTex=tex(768,200,(c,w,h)=>{
+  const gr=c.createLinearGradient(0,0,0,h);gr.addColorStop(0,'#2b3a4b');gr.addColorStop(1,'#475a70');c.fillStyle=gr;c.fillRect(0,0,w,h);
+  for(let i=0;i<7;i++){c.fillStyle='rgba(150,195,235,'+(.05+Math.random()*.07)+')';c.fillRect(Math.random()*w,0,16+Math.random()*60,h)}
+  const bw=w/3,band=22,hb=h-band;
+  for(let b=0;b<3;b++){const x0=b*bw;
+   for(const [ax,ay,bx,by] of [[x0,0,x0+bw,hb],[x0+bw,0,x0,hb]]){
+    c.strokeStyle='#161d29';c.lineWidth=25;c.beginPath();c.moveTo(ax,ay);c.lineTo(bx,by);c.stroke();
+    c.strokeStyle='#37465f';c.lineWidth=19;c.beginPath();c.moveTo(ax,ay);c.lineTo(bx,by);c.stroke();
+    c.strokeStyle='#9bb0cf';c.lineWidth=3;c.beginPath();c.moveTo(ax-4,ay);c.lineTo(bx-4,by);c.stroke()}
+   c.fillStyle='#2b384f';c.fillRect(x0-4,0,8,hb)}
+  c.fillStyle='#6f757e';c.fillRect(0,hb,w,band);c.fillStyle='#c3c7cd';c.fillRect(0,hb+3,w,band-8)});
+towerGlassTex.wrapS=towerGlassTex.wrapT=THREE.RepeatWrapping;
+const towerGlowTex=tex(768,200,(c,w,h)=>{c.fillStyle='#000';c.fillRect(0,0,w,h);const bw=w/3;
+  for(let b=0;b<3;b++){const x0=b*bw;for(const [x,y,ww,hh] of [[x0+10,64,46,62],[x0+bw-56,64,46,62],[x0+bw/2-22,10,44,38]])
+   if(Math.random()<.45){c.fillStyle=Math.random()<.85?'#ffd694':'#a8d8ff';c.fillRect(x,y,ww,hh)}}});
+towerGlowTex.wrapS=towerGlowTex.wrapT=THREE.RepeatWrapping;
+const towerLogoTex=tex(256,320,(c,w,h)=>{c.clearRect(0,0,w,h);logo(c,128,112,86,'#3b78ff');
+  c.fillStyle='#4f86ff';c.font='bold 54px Arial,sans-serif';c.textAlign='center';c.fillText('SENATI',128,282)});
+const diagridMats=[];                                               /* materiales de vidrio: de noche se encienden (ver diagridEvening) */
+function diagridTower(cx,cz,h){
+  const BASE=2.4,N=Math.max(4,Math.round((h-BASE)/3.9)),bandH=(h-BASE)/N;
+  const conc=towerConcTex.clone();conc.wrapS=conc.wrapT=THREE.RepeatWrapping;conc.repeat.set(2.5,h/22);conc.needsUpdate=true;
+  const concM=new THREE.MeshStandardMaterial({map:conc,roughness:.92,metalness:.04,envMapIntensity:.2});
+  const gt=towerGlassTex.clone(),gl=towerGlowTex.clone();for(const t of[gt,gl]){t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(1,N);t.needsUpdate=true}
+  const glassM=new THREE.MeshStandardMaterial({map:gt,emissive:0xffffff,emissiveMap:gl,emissiveIntensity:0,roughness:.3,metalness:.5,envMapIntensity:.8});diagridMats.push(glassM);
+  const mesh=(geo,mat,x,y,z)=>{const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);m.castShadow=m.receiveShadow=true;scene.add(m);return m};
+  /* cuerpo de concreto + columnas altas a lo largo de todo el fondo (ancha a la izquierda, delgada a la derecha) */
+  mesh(new THREE.BoxGeometry(23,h,23),concM,cx,h/2,cz);
+  mesh(new THREE.BoxGeometry(6,h+4,24.8),concM,cx-8.5,(h+4)/2,cz);
+  mesh(new THREE.BoxGeometry(2,h+2.5,24.8),concM,cx+10.5,(h+2.5)/2,cz);
+  /* fachada de vidrio con cruces: una a cada lado (norte y sur), entre las dos columnas */
+  const GW=15,GX=cx+2;
+  for(const sg of[-1,1]){const gp=new THREE.Mesh(new THREE.PlaneGeometry(GW,h-BASE),glassM);gp.position.set(GX,BASE+(h-BASE)/2,cz+sg*11.52);if(sg<0)gp.rotation.y=Math.PI;scene.add(gp)}
+  /* losas claras que sobresalen del vidrio, una por piso (InstancedMesh: una sola llamada de dibujo) */
+  const sl=new THREE.InstancedMesh(new THREE.BoxGeometry(GW,.42,.9),new THREE.MeshStandardMaterial({color:0xb0b4ba,roughness:.6,metalness:.05}),(N+1)*2),m4=new THREE.Matrix4();let k=0;
+  for(let i=0;i<=N;i++)for(const sg of[-1,1]){m4.makeTranslation(GX,i<N?BASE+i*bandH+.21:h-.21,cz+sg*11.95);sl.setMatrixAt(k++,m4)}
+  sl.castShadow=sl.receiveShadow=true;sl.frustumCulled=false;scene.add(sl);
+  /* corona abierta de la azotea: losa, vigas claras, pilares y cuarto técnico */
+    box(0x7d8189,cx-5.5,cx+9.5,h,h+.35,cz-11.5,cz+11.5);
+  for(const sg of[-1,1])box(0xb4b8be,cx-5.5,cx+9.5,h+2.7,h+3.3,cz+sg*11.7-.4,cz+sg*11.7+.4);
+  for(const px of[-3.5,.5,4.5,8.2])for(const sg of[-1,1])box(0xb4b8be,cx+px-.25,cx+px+.25,h+.35,h+2.7,cz+sg*11.7-.25,cz+sg*11.7+.25);
+  box(0x2b2e34,cx-3,cx+5,h+.35,h+3.1,cz-3.5,cz+3.5);
+  cylM(S(0x30363f,.5),.14,.14,7,cx+3,h+4.2,cz-1,6);cylM(S(0x30363f,.5),.14,.14,9.5,cx+7,h+5,cz+2,6);
+  /* logo hexagonal + SENATI en la columna ancha, en ambas caras */
+  for(const sg of[-1,1]){const lg=new THREE.Mesh(new THREE.PlaneGeometry(4.6,5.75),new THREE.MeshBasicMaterial({map:towerLogoTex,transparent:true}));
+   lg.position.set(cx-8.5,h-2.6,cz+sg*12.42);if(sg<0)lg.rotation.y=Math.PI;scene.add(lg)}
+  box(0x2c2f35,cx-13,cx+13,0,BASE,cz-13,cz+13);                          /* basamento oscuro */
+  const lobby=new THREE.Mesh(new THREE.PlaneGeometry(11,2.1),new THREE.MeshStandardMaterial({color:0x0b0e14,emissive:0xffd9a0,emissiveIntensity:.5,roughness:.3,metalness:.6,envMapIntensity:.9}));
+  lobby.position.set(GX,1.3,cz-13.06);scene.add(lobby)}
+diagridTower(36,87,44);diagridTower(76,87,52);diagridTower(114,87,40);
 obst(24.5,47.5,75,99);   /* Torre A */
 obst(64.5,87.5,75,99);   /* Torre B */
 obst(102.5,125.5,75,99); /* Torre C */

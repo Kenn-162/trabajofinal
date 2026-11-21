@@ -19,3 +19,5 @@ Salto y globos de chat
 
 ## Aspecto del personaje
 Cada `player:move` puede incluir `look: {f, o, t, h}` (género 0-1, skin 0-5, piel 0-3, cabello 0-5). El servidor lo valida (solo enteros en rango) y lo reenvía en `player:moved` / `player:joined` / `world:init`. Sin `look`, el cliente usa un aspecto por defecto derivado del nombre de usuario.
+
+`player:move` también puede incluir `c: 1` cuando el jugador está agachado; el servidor lo reenvía tal cual (`player.c`).

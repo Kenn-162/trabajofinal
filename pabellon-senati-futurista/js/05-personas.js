@@ -42,7 +42,7 @@ function put(f,type,x,z,ry,seated){const p=person(type,seated);p.position.set(x,
 function clearAll(){people.forEach(p=>p.parent&&p.parent.remove(p));people.length=0;walkers.length=0;cnt()}
 function populate(){clearAll();
  for(const r of rooms){if(Math.random()<.45)continue;const fy=r.ex>0?Math.PI/2:-Math.PI/2;
-  put(r.f,'profesor',r.X(5),r.Z(3.4),fy+Math.PI,false);
+  put(r.f,'profesor',r.X(5),r.Z(3.4),fy+Math.PI,false).userData.rad=.9;   /* el del aula solo se mueve junto a la pizarra */
   r.seats.filter(()=>Math.random()<(r.lab?.45:.5)).forEach(st=>put(r.f,'alumno',r.X(st.u),r.Z(st.v),fy,true))}
  const types=['alumno','persona','profesor','alumno'];
  for(const f of[0,1]){for(let k=0;k<6;k++){const p=put(f,types[k%4],0,0,0,false);walkers.push({p,z:(Math.random()-.5)*1.3,a:2+Math.random()*10,b:40+Math.random()*24,x:10+Math.random()*30,v:(.8+Math.random()*.5)*(Math.random()<.5?1:-1),t:Math.random()*6})}
@@ -55,6 +55,6 @@ function populate(){clearAll();
  for(const fx of[-110,-42]){const p=put(0,'alumno',fx,1+Math.random()*6,Math.random()*6.28,false);
   walkers.push({p,z:0+Math.random()*6,a:-110,b:-42,x:fx,v:(.7+Math.random()*.5)*(Math.random()<.5?1:-1),t:Math.random()*6})}
  /* dos estudiantes conversando junto al ingreso */
- put(0,'alumno',2.6,-8.4,Math.PI/2,false);put(0,'persona',3.6,-8.1,-Math.PI/2,false)
+ put(0,'alumno',2.6,-8.4,Math.PI/2,false).userData.talk=true;put(0,'persona',3.6,-8.1,-Math.PI/2,false).userData.talk=true
 function animate(dt){for(const w of walkers){w.x+=w.v*dt;w.t+=dt*4;if(w.x>w.b){w.x=w.b;w.v=-Math.abs(w.v)}if(w.x<w.a){w.x=w.a;w.v=Math.abs(w.v)}
  w.p.position.set(w.x,0,w.z);w.p.rotation.y=w.v>0?Math.PI/2:-Math.PI/2;const s=Math.sin(w.t)*.6,u=w.p.userData;u.legs[0].rotation.x=s;u.legs[1].rotation.x=-s;u.arms[0].rotation.x=-s*.7;u.arms[1].rotation.x=s*.7}}
