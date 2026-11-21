@@ -13,7 +13,10 @@
  function setState(message,connected){status.textContent=message;input.disabled=!connected;send.disabled=!connected}
  function line(m){const d=document.createElement('div'),b=document.createElement('b'),t=document.createElement('span');b.textContent=m.username+': ';t.textContent=m.text;d.append(b,t);log.append(d);while(log.children.length>50)log.firstChild.remove();log.scrollTop=log.scrollHeight}
  function sprite(txt){const c=document.createElement('canvas');c.width=512;c.height=128;const x=c.getContext('2d');x.fillStyle='rgba(5,12,24,.86)';x.fillRect(0,0,512,128);x.fillStyle='white';x.textAlign='center';x.font='bold 32px Arial';x.fillText(txt.slice(0,32),256,70);const tex=new THREE.CanvasTexture(c);return new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false}))}
- function add(p){let a=rem.get(p.id);if(!a){const g=new THREE.Group(),body=new THREE.Mesh(new THREE.CylinderGeometry(.28,.28,1,12),new THREE.MeshStandardMaterial({color:0x2d6cdf})),head=new THREE.Mesh(new THREE.SphereGeometry(.22,12,10),new THREE.MeshStandardMaterial({color:0xe9bd93}));body.position.y=.85;head.position.y=1.55;g.add(body,head);const n=sprite(p.username);n.scale.set(2.4,.6,1);n.position.y=2.08;g.add(n);g.name='mp-jugador';g.position.set(p.x,p.y,p.z);g.rotation.y=p.yaw;scene.add(g);a={g,t:{}};rem.set(p.id,a)}Object.assign(a.t,{x:p.x,y:p.y,z:p.z,yaw:p.yaw})}
+ /* Los demás jugadores usan el mismo avatar que el tuyo (jugador.js): el aspecto sale de su nombre de usuario,
+    así que todos ven a cada persona igual, y camina/corre según la velocidad que se calcula entre cuadros. */
+ function add(p){let a=rem.get(p.id);if(!a){const g=window.crearAvatar(p.username,true);
+   g.name='mp-jugador';g.position.set(p.x,p.y,p.z);g.rotation.y=p.yaw;scene.add(g);a={g,t:{},sp:0,px:p.x,pz:p.z};rem.set(p.id,a)}Object.assign(a.t,{x:p.x,y:p.y,z:p.z,yaw:p.yaw})}
   function del(id) {
   clearTimeout(timers.get(id));
   timers.delete(id);
@@ -30,13 +33,7 @@
   if (!avatar) return;
 
   scene.remove(avatar.g);
-  avatar.g.traverse(obj => {
-   if (obj.isMesh) obj.geometry.dispose();
-   if (obj.material) {
-    if (obj.material.map) obj.material.map.dispose();
-    obj.material.dispose();
-   }
-  });
+  window.liberarAvatar(avatar.g);
   rem.delete(id);
  }
  function bubble(id,txt){const a=rem.get(id);if(!a)return;const old=bubs.get(id);if(old){a.g.remove(old);old.material.map.dispose();old.material.dispose()}const b=sprite(txt);b.scale.set(2.3,.6,1);b.position.y=2.75;a.g.add(b);bubs.set(id,b);clearTimeout(timers.get(id));timers.set(id,setTimeout(()=>{if(bubs.get(id)===b){a.g.remove(b);b.material.map.dispose();b.material.dispose();bubs.delete(id);timers.delete(id)}},6000))}
@@ -46,7 +43,8 @@
  function toast(txt){const el=document.createElement('div');el.textContent=txt;el.style.cssText='position:fixed;left:50%;top:18px;transform:translateX(-50%);z-index:40;background:#0b3d24ee;color:#fff;border:1px solid #3ddc84;border-radius:10px;padding:10px 16px;font:14px Arial;box-shadow:0 4px 18px #0008';document.body.append(el);setTimeout(()=>el.remove(),4500)}
  function getSession(){return fetch('auth/session.php',{credentials:'same-origin',cache:'no-store'}).then(r=>r.json().catch(()=>({})).then(d=>({status:r.status,data:d})))}
  function loadIO(){return window.io?Promise.resolve():new Promise((ok,fail)=>{const s=document.createElement('script');s.src=socketURL+'/socket.io/socket.io.js';s.onload=ok;s.onerror=fail;document.head.append(s)})}
- function showAccount(name){userline.textContent='Cuenta: '+name+' ';const a=document.createElement('a');a.href='auth/logout.php';a.textContent='Salir';userline.append(a)}
+ function showAccount(name){window.PLAYER_NAME=name;   /* jugador.js dibuja tu avatar con el aspecto de este nombre */
+  userline.textContent='Cuenta: '+name+' ';const a=document.createElement('a');a.href='auth/logout.php';a.textContent='Salir';userline.append(a)}
  function start(d){
   if(started)return;started=true;
   loadIO().then(()=>{
@@ -63,14 +61,17 @@
     requestAnimationFrame(tick);
     const now=performance.now(),dt=Math.min((now-lastFrame)/1000,.1);lastFrame=now;
     if(!so||!so.connected)return;
-    const p={x:P.x,y:P.y+(window.JUMP?JUMP.h:0),z:P.z,yaw:P.yaw};   /* y incluye el salto */
+    const p={x:P.x,y:P.y+(window.JUMP?JUMP.h:0),z:P.z,yaw:window.PJ?PJ.bodyYaw:P.yaw};   /* y incluye el salto; yaw = hacia dónde mira tu cuerpo */
     const diff=last?Math.max(Math.abs(p.x-last.x),Math.abs(p.y-last.y),Math.abs(p.z-last.z),Math.abs(p.yaw-last.yaw)):1;
     const moved=!last||Math.abs(p.x-last.x)>.015||Math.abs(p.y-last.y)>.015||Math.abs(p.z-last.z)>.015||Math.abs(p.yaw-last.yaw)>.02;
     /* throttle: como mucho cada 60 ms (~16/s) y solo con cambio real; si quedo un resto sin enviar, un ultimo envio exacto al parar */
     if((moved||diff>0)&&now-lastAt>=(moved?60:150)){so.volatile.emit('player:move',p);last=p;lastAt=now}
     const k=1-Math.exp(-14*dt);                                        /* lerp suave, igual a cualquier FPS */
     rem.forEach(a=>{const g=a.g;g.position.x+=(a.t.x-g.position.x)*k;g.position.y+=(a.t.y-g.position.y)*k;g.position.z+=(a.t.z-g.position.z)*k;
-     g.rotation.y+=Math.atan2(Math.sin(a.t.yaw-g.rotation.y),Math.cos(a.t.yaw-g.rotation.y))*k});
+     g.rotation.y+=Math.atan2(Math.sin(a.t.yaw-g.rotation.y),Math.cos(a.t.yaw-g.rotation.y))*k;
+     /* velocidad real entre cuadros (suavizada) → mueve piernas y brazos; un salto de teletransporte no cuenta como correr */
+     const inst=Math.min(Math.hypot(g.position.x-a.px,g.position.z-a.pz)/Math.max(dt,.001),8);a.sp+=(inst-a.sp)*(1-Math.exp(-8*dt));a.px=g.position.x;a.pz=g.position.z;
+     window.animarAvatar(g,a.sp,dt,0)});
    }
    tick();
   }).catch(()=>setState('Sesión iniciada, pero no se pudo cargar el cliente de Socket.io desde '+socketURL+'. Ejecuta "npm start".',false));

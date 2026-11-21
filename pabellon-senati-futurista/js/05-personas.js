@@ -15,7 +15,10 @@ function person(type,seated){const T=TY[type],p=new THREE.Group(),skin=[0xf1c9a5
 /* personas más realistas */
 const cyl=(a,b,h,s=10)=>new THREE.CylinderGeometry(a,b,h,s),SP=new THREE.SphereGeometry(1,14,12);
 const TY2={alumno:{top:0x1b4fd8,bot:0x0e0f12,h:1.68},profesor:{top:0xe9edf2,bot:0x2b2e36,h:1.78},persona:{top:0xd9822b,bot:0x3a5a8c,h:1.7},limpieza:{top:0x2fa24f,bot:0x1d7a3b,h:1.68}};let logoMat=null;
-function person(type,seated){const T=TY2[type],p=new THREE.Group(),sk=[0xf1c9a5,0xd9a47a,0xb97a52,0x8a5a3a][Math.random()*4|0],hc=[0x14110f,0x2b1d12,0x4a3524,0x777777][Math.random()*4|0],fem=Math.random()<.4;
+/* `look` (opcional) fija el aspecto: {skin,hair,fem,pack,scale}. Sin él cada persona sale aleatoria (como antes).
+   Lo usa jugador.js para que tu avatar (y los de otros jugadores) se vean siempre igual. */
+const SKINS=[0xf1c9a5,0xd9a47a,0xb97a52,0x8a5a3a],HAIRS=[0x14110f,0x2b1d12,0x4a3524,0x777777];
+function person(type,seated,look){look=look||{};const T=TY2[type],p=new THREE.Group(),sk=look.skin!==undefined?look.skin:SKINS[Math.random()*4|0],hc=look.hair!==undefined?look.hair:HAIRS[Math.random()*4|0],fem=look.fem!==undefined?look.fem:Math.random()<.4;
  const mk=(g,c,x,y,z,par=p,sx=1,sy=1,sz=1)=>{const m=new THREE.Mesh(g,PM(c));m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;par.add(m);return m};
  const hy=seated?.5:.82,legs=[],arms=[];
  for(const k of[-1,1]){const l=new THREE.Group();l.position.set(k*.1,hy,0);p.add(l);
@@ -25,10 +28,10 @@ function person(type,seated){const T=TY2[type],p=new THREE.Group(),sk=[0xf1c9a5,
  mk(cyl(.2,.17,.62,14),T.top,0,hy+.3,0,p,1,1,.62);mk(cyl(.05,.05,.1),sk,0,hy+.64,0);mk(SP,sk,0,hy+.78,0,p,.105,.125,.115);
  mk(SP,hc,0,hy+.8,-.015,p,.112,.12,.12);if(fem)mk(cyl(.1,.09,.28),hc,0,hy+.62,-.08,p,1,1,.7);
  if(type=='alumno'){if(!logoMat)logoMat=new THREE.MeshBasicMaterial({map:tex(64,64,(c,w,h)=>{logo(c,32,32,26,'#fff')}),transparent:true});
-  const lg=new THREE.Mesh(new THREE.PlaneGeometry(.075,.075),logoMat);lg.position.set(.09,hy+.45,.13);p.add(lg);if(Math.random()<.5)mk(bg,0x15171b,0,hy+.32,-.17,p,.3,.4,.12)}
+  const lg=new THREE.Mesh(new THREE.PlaneGeometry(.075,.075),logoMat);lg.position.set(.09,hy+.45,.13);p.add(lg);if(look.pack!==undefined?look.pack:Math.random()<.5)mk(bg,0x15171b,0,hy+.32,-.17,p,.3,.4,.12)}
  if(type=='limpieza')mk(cyl(.12,.12,.06),0x1f7a3a,0,hy+.9,0);
  if(type=='profesor')mk(bg,0x7a1f1f,0,hy+.38,.12,p,.05,.28,.02);
- p.scale.setScalar(T.h/1.7*(.95+Math.random()*.1));p.userData={legs,arms,type,seated};return p}
+ p.scale.setScalar(T.h/1.7*(look.scale!==undefined?look.scale:.95+Math.random()*.1));p.userData={legs,arms,type,seated};return p}
 const people=[],walkers=[];
 const cnt=()=>{document.getElementById('cnt').textContent=people.length+' personas';if(typeof updStats==='function')updStats()};
 function put(f,type,x,z,ry,seated){const p=person(type,seated);p.position.set(x,0,z);p.rotation.y=ry;g[f].add(p);people.push(p);cnt();return p}
