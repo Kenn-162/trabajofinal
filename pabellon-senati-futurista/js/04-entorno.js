@@ -47,7 +47,9 @@ const grassTex=tex(256,256,(c,w,h)=>{c.fillStyle='#4c8442';c.fillRect(0,0,w,h);
   for(let i=0;i<34;i++){c.fillStyle='rgba(28,56,24,.2)';c.beginPath();c.ellipse(Math.random()*w,Math.random()*h,6+Math.random()*18,4+Math.random()*10,Math.random()*3,0,7);c.fill()}});
 grassTex.wrapS=grassTex.wrapT=THREE.RepeatWrapping;grassTex.repeat.set(10,7);
 const gm=new THREE.MeshStandardMaterial({map:grassTex,roughness:1,metalness:0,envMapIntensity:.18});
-const lawn=(x0,x1,z0,z1)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(x1-x0,z1-z0),gm);m.rotation.x=-Math.PI/2;m.position.set((x0+x1)/2,-.1,(z0+z1)/2);m.receiveShadow=true;scene.add(m)};
+/* moveZone(i,dx,dz): reúne todo lo que se añadió a la escena desde el índice i en un grupo y lo desplaza (reubicar edificios según el plano) */
+function moveZone(i,dx,dz){const grp=new THREE.Group();scene.children.slice(i).forEach(o=>grp.add(o));grp.position.set(dx,0,dz);scene.add(grp);return grp}
+const lawn=(x0,x1,z0,z1,y=-.1,mat=gm)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(x1-x0,z1-z0),mat);m.rotation.x=-Math.PI/2;m.position.set((x0+x1)/2,y,(z0+z1)/2);m.receiveShadow=true;scene.add(m)};
 lawn(-127,-95,-158,42);        /* camellón de la pirámide */
 lawn(-62,-12,-66,-30);         /* parque */
 lawn(8,128,66,101);            /* franja de torres sur */
@@ -57,8 +59,8 @@ asphalt(-215,215,-186,-160,26);
 lineY(-215,215,-162.5,0xdcd9cf,.85,.35);lineY(-215,215,-183.5,0xdcd9cf,.85,.35);
 for(let x=-212;x<215;x+=16){lineY(x,x+8,-176.5,0xe8e9e6,.7,.3);lineY(x,x+8,-169.5,0xe8e9e6,.7,.3)}
 box(0x6f7a55,-215,215,0,.14,-174.4,-171.6);             /* separador de sentido */
-asphalt(-9,9,-160,4,9);                                 /* calzada de ingreso */
-lineX(-8.3,-158,-9.5,0xe3b93c,.9,.3);lineX(8.3,-158,-9.5,0xe3b93c,.9,.3);
+asphalt(-9,9,-160,8,9);                                 /* calzada de ingreso */
+lineX(-8.3,-158,6.5,0xe3b93c,.9,.3);lineX(8.3,-158,6.5,0xe3b93c,.9,.3);
 {const m=new THREE.Mesh(new THREE.PlaneGeometry(5.6,7),new THREE.MeshBasicMaterial({map:tex(128,192,(c)=>{c.clearRect(0,0,128,192);c.fillStyle='#f2f2f0';c.beginPath();c.moveTo(64,8);c.lineTo(116,88);c.lineTo(82,88);c.lineTo(82,184);c.lineTo(46,184);c.lineTo(46,88);c.lineTo(12,88);c.closePath();c.fill()}),transparent:true,depthWrite:false}));m.rotation.x=-Math.PI/2;m.position.set(0,.02,-138);scene.add(m)}  /* flecha pintada */
 asphalt(-175,175,60,66,24);                            /* pista sur */
 lineY(-175,175,61.1,0xe3b93c,.8,.28);lineY(-175,175,64.9,0xe3b93c,.8,.28);
@@ -558,19 +560,24 @@ lampPost(42,-68.5,0);lampPost(98,-68.5,Math.PI);
 obst(19,121,-99.2,-83.8);                        /* Centro de Formación N°2: sin atravesar muros */
 obst(-112,-24,-98,-70);       /* auditorio */
 obst(-124,-76,-62,-36);       /* comedor */
-obst(-82,-37,-5.8,5.8);       /* anexo Estudios Generales */
-obst(-88,26,26,50);           /* escuela de Artes Gráficas */
+obst(-125.4,-80.6,10.2,21.8);   /* anexo Estudios Generales (junto al pabellón; deja libre la escalera exterior oeste) */
+obst(-122,-8,30,54);           /* escuela de Artes Gráficas */
 obst(131,167,-155,57);        /* escuela de Mecánica de Mantenimiento */
 obst(58,70.4,-22,-9);         /* contenedores */
 
 /* ── CANCHA DE FÚTBOL (movida al flanco oeste, frente a la pirámide) ── */
 const fieldLineMat=new THREE.MeshBasicMaterial({color:0xf2f4ee,transparent:true,opacity:.92,depthWrite:false});
-const FC={x:-76,z:1};
+const FC={x:-93,z:-14},HL=30,HW=19;                                 /* centro de la cancha, mitad de largo y de ancho (60 × 38 m) */
+window.__cancha={x:FC.x,z:FC.z,hl:HL,hw:HW};
+const pitchTex=tex(256,256,(c,w,h)=>{for(let i=0;i<8;i++){c.fillStyle=i%2?'#4f8c45':'#437d39';c.fillRect(i*32,0,32,h)}noise(c,w,h,1200,.05,60,130)});   /* franjas de corte cada 8 m */
+pitchTex.wrapS=pitchTex.wrapT=THREE.RepeatWrapping;
+lawn(FC.x-HL-3,FC.x+HL+3,FC.z-HW-2,FC.z+HW+2,-.09,new THREE.MeshStandardMaterial({map:pitchTex,roughness:1,metalness:0,envMapIntensity:.18}));
 const line=(w,l,x,z)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,l),fieldLineMat);m.rotation.x=-Math.PI/2;m.position.set(x,.02,z);scene.add(m)};
-line(80,.32,FC.x,FC.z-24);line(80,.32,FC.x,FC.z+24);line(80,.32,FC.x,FC.z);line(.32,48.3,FC.x-40,FC.z);line(.32,48.3,FC.x+40,FC.z);
+line(2*HL,.32,FC.x,FC.z-HW);line(2*HL,.32,FC.x,FC.z+HW);line(.32,2*HW,FC.x,FC.z);line(.32,2*HW,FC.x-HL,FC.z);line(.32,2*HW,FC.x+HL,FC.z);
 {const ring=new THREE.Mesh(new THREE.RingGeometry(4.3,5,44),fieldLineMat);ring.rotation.x=-Math.PI/2;ring.position.set(FC.x,.02,FC.z);scene.add(ring);
  const dot=new THREE.Mesh(new THREE.CircleGeometry(.32,12),fieldLineMat);dot.rotation.x=-Math.PI/2;dot.position.set(FC.x,.02,FC.z);scene.add(dot);
- for(const s of[-1,1]){const bx=FC.x+s*40;line(.32,26,bx-s*10,FC.z-13);line(.32,26,bx-s*10,FC.z+13);line(10,.32,bx-s*5,FC.z-13);line(10,.32,bx-s*5,FC.z+13);line(10,.32,bx-s*10,FC.z);
+ for(const s of[-1,1]){const bx=FC.x+s*HL;line(.32,22,bx-s*10,FC.z);line(10,.32,bx-s*5,FC.z-11);line(10,.32,bx-s*5,FC.z+11);        /* área grande */
+   line(.32,10,bx-s*4,FC.z);line(4,.32,bx-s*2,FC.z-5);line(4,.32,bx-s*2,FC.z+5);                                                     /* área chica */
    const d=new THREE.Mesh(new THREE.CircleGeometry(.3,10),fieldLineMat);d.rotation.x=-Math.PI/2;d.position.set(bx-s*6.6,.02,FC.z);scene.add(d)}}
 const goalMat=new THREE.MeshStandardMaterial({color:0xf4f6f4,roughness:.35,metalness:.25,envMapIntensity:.7});
 function goalAt(x,flip){const gM=new THREE.Group();
@@ -578,12 +585,13 @@ function goalAt(x,flip){const gM=new THREE.Group();
   const bar=new THREE.Mesh(new THREE.CylinderGeometry(.09,.09,7.3,10),goalMat);bar.rotation.x=Math.PI/2;bar.position.set(0,2.32,0);bar.castShadow=true;gM.add(bar);
   [[-3.6],[3.6]].forEach(([dz])=>{const p=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,1.5,8),goalMat);p.rotation.z=Math.PI/2;p.position.set(flip*.75,.6,dz);gM.add(p)});
   gM.position.set(x,0,FC.z);gM.rotation.y=flip>0?0:Math.PI;scene.add(gM)}
-goalAt(FC.x-40,1);goalAt(FC.x+40,-1);
+goalAt(FC.x-HL,1);goalAt(FC.x+HL,-1);
 /* reflectores */
 function floodPole(x,z){cylM(S(0x333840,.6),.16,.22,10.5,x,5.25,z,8);box(0x333840,x-.9,x+.9,10.3,10.7,z-.3,z+.3);for(const dx of[-.6,0,.6])box(0xd8d8d5,x+dx-.18,x+dx+.18,10.0,10.32,z-.22,z+.22)}
-floodPole(FC.x-38,FC.z-22);floodPole(FC.x+38,FC.z+22);
+floodPole(FC.x-HL+2,FC.z-HW-1.5);floodPole(FC.x+HL-2,FC.z+HW+1.5);floodPole(FC.x+HL-2,FC.z-HW-1.5);floodPole(FC.x-HL+2,FC.z+HW+1.5);
 
 /* ── LOZA DEPORTIVA (volley, cemento gris) ──────────────── */
+const __zLoza=scene.children.length;
 asphalt(-33,-11,-14,18,8);
 {const cm=new THREE.MeshBasicMaterial({color:0xf2f4ee,transparent:true,opacity:.9,depthWrite:false});
  const L=(w,l,x,z)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,l),cm);m.rotation.x=-Math.PI/2;m.position.set(x,.02,z);scene.add(m)};
@@ -592,7 +600,9 @@ cylM(S(0xf2f2f2,.4),.09,.11,2.5,-22,1.25,-1.2,8);cylM(S(0xf2f2f2,.4),.09,.11,2.5
 {const net=new THREE.Mesh(new THREE.PlaneGeometry(8.6,.95),std({color:0x14161a,roughness:.9,transparent:true,opacity:.78,side:THREE.DoubleSide,envMapIntensity:.2}));net.position.set(-22,2.03,2);net.rotation.y=Math.PI/2;net.castShadow=true;scene.add(net);
  const top=new THREE.Mesh(new THREE.BoxGeometry(.06,.09,8.7),S(0xf2f2f2,.4));top.position.set(-22,2.52,2);scene.add(top)}
 
+moveZone(__zLoza,-20,-12);                                   /* plano: junto a la cancha, al este de ella y al oeste del eje del ingreso */
 /* ── ANEXO: Estudios Generales (bloque azul bajo) ─────────── */
+const __zAnexo=scene.children.length;
 box(0xe9ebed,-82,-37,0,4.4,-5.4,5.4);
 boxM(portalBlue,-82.4,-36.6,4.4,5.5,-5.8,5.8);
 {const ef=new THREE.Mesh(new THREE.PlaneGeometry(44,1),new THREE.MeshBasicMaterial({map:tex(1024,64,(c,w,h)=>{c.clearRect(0,0,w,h);c.fillStyle='#ffffff';c.font='700 46px "Barlow Condensed",Arial Narrow,Arial';c.textAlign='center';c.textBaseline='middle';c.fillText('ESTUDIOS GENERALES',w/2,h/2+2)}),transparent:true}));ef.position.set(-59.5,4.95,5.85);scene.add(ef)}
@@ -601,7 +611,9 @@ for(const gx of[-74,-64,-54,-44]){boxM(new THREE.MeshStandardMaterial({color:0x1
 {const efT=tex(1024,64,(c,w,h)=>{c.clearRect(0,0,w,h);c.fillStyle='#ffffff';c.font='700 46px "Barlow Condensed",Arial Narrow,Arial';c.textAlign='center';c.textBaseline='middle';c.fillText('ESTUDIOS GENERALES',w/2,h/2+2)});const efN=new THREE.Mesh(new THREE.PlaneGeometry(44,1),new THREE.MeshBasicMaterial({map:efT,transparent:true}));efN.position.set(-59.5,4.95,-5.85);efN.rotation.y=Math.PI;scene.add(efN)}
 boxM(S(0x1646a0,.4),-82.4,-36.6,0,.5,-5.8,-5.4);box(0xb9bfc5,-60,-56,5.5,6.15,-2,2);
 
+moveZone(__zAnexo,-43.5,16);                                 /* plano: en fila con el pabellón, a su oeste (con 2 m de paso hasta su escalera exterior) */
 /* ── ESCUELA DE ARTES GRÁFICAS (sur) ──────────────────────── */
+const __zGraf=scene.children.length;
 const graficasTex=tex(2048,768,(c,w,h)=>{c.fillStyle='#dfe3e6';c.fillRect(0,0,w,h);noise(c,w,h,700,.10,140,225);
   /* 4 plantas con cintas de ventanas y parapetos azules */
   for(let f=0;f<4;f++){const y=560-f*150;
@@ -626,6 +638,7 @@ box(0xc9ced4,-60,-52,15.3,16.1,32,38);box(0xc9ced4,-20,-13.5,15.3,16,40,45);
 for(let x=-80;x<24;x+=6)box(0x9aa1a8,x-.05,x+.05,15.3,16.15,49.6,50);
 box(0xe8b400,-88.4,26.4,.1,.6,25.2,25.6);
 
+moveZone(__zGraf,-34,4);                                     /* plano: al sur de la fila pabellón/anexo */
 /* ── PALMERAS DEL BORDE SUR + TORRES A/B/C (diagrid) ─────── */
 palm(-13,73,1.0);palm(2,73.5,1.1);palm(17,73,.95);palm(-6,81,1.15);palm(10,81,1.0);palm(24,80.5,.9);
 /* Réplica de la torre SENATI de las fotos: volumen de concreto gris oscuro, una columna vertical ancha (con el

@@ -1,6 +1,6 @@
 /* placement */
 const pick=[new THREE.Mesh(new THREE.PlaneGeometry(240,240),new THREE.MeshBasicMaterial({visible:false})),new THREE.Mesh(new THREE.PlaneGeometry(L,2*D),new THREE.MeshBasicMaterial({visible:false}))];
-pick[0].rotation.x=-Math.PI/2;pick[0].position.set(24,0,0);g[0].add(pick[0]);pick[0].position.set(24,0,0);
+pick[0].rotation.x=-Math.PI/2;pick[0].position.set(24,0,0);scene.add(pick[0]);   /* en el mundo: el pabellón ya no está en el origen */
 pick[1].rotation.x=-Math.PI/2;pick[1].position.set(33,.02,0);g[1].add(pick[1]);
 let tool=null;const ray=new THREE.Raycaster(),mv=new THREE.Vector2();
 function place(ev){mv.set(ev.clientX/innerWidth*2-1,-(ev.clientY/innerHeight)*2+1);ray.setFromCamera(mv,camera);scene.updateMatrixWorld(true);

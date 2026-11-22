@@ -88,3 +88,5 @@ const q0=new THREE.Quaternion(),ub=new THREE.BoxGeometry(1,1,1),M4=new THREE.Mat
 lists.forEach((l,f)=>{const grp=f==2?roofG:g[f];for(const m in l){const a=l[m],im=new THREE.InstancedMesh(ub,mats[m],a.length);
  a.forEach((b,i)=>{M4.compose(new THREE.Vector3(b[0],b[1],b[2]),q0,new THREE.Vector3(b[3]||.001,b[4]||.001,b[5]||.001));im.setMatrixAt(i,M4)});
  im.frustumCulled=false;if(!['light','glass','mirror'].includes(m)){im.castShadow=im.receiveShadow=true}grp.add(im)}});
+/* el pabellón ya está construido en locales: sus colisiones y escaleras pasan a coordenadas del mundo */
+cols.forEach(a=>a.forEach(c=>{c[0]+=PAV.x;c[1]+=PAV.x;c[2]+=PAV.z;c[3]+=PAV.z}));zones.forEach(q=>{q[0]+=PAV.x;q[1]+=PAV.x});

@@ -38,18 +38,18 @@
   return ai}
 
  function pickTarget(p,ai){
-  const f=p.parent===g[1]?1:0;
+  const f=p.parent===g[1]?1:0,ox=p.parent.position.x,oz=p.parent.position.z;   /* p.position es local al grupo; blocked() usa el mundo */
   for(let i=0;i<8;i++){
    const a=R(0,6.283),d=R(.35,1)*ai.rad,tx=ai.hx+Math.sin(a)*d,tz=ai.hz+Math.cos(a)*d;
-   let ok=!blocked(tx,tz,f);                                                   /* el destino y 3 puntos del camino deben estar libres */
-   for(let s=1;ok&&s<4;s++)ok=!blocked(p.position.x+(tx-p.position.x)*s/4,p.position.z+(tz-p.position.z)*s/4,f);
+   let ok=!blocked(tx+ox,tz+oz,f);                                             /* el destino y 3 puntos del camino deben estar libres */
+   for(let s=1;ok&&s<4;s++)ok=!blocked(p.position.x+(tx-p.position.x)*s/4+ox,p.position.z+(tz-p.position.z)*s/4+oz,f);
    if(ok){ai.tx=tx;ai.tz=tz;return true}}
   return false}
 
  function step(p,dt){
   const u=p.userData,ai=u.ai||init(p),A=u.arms,L=u.legs,role=ai.role,k=1-Math.exp(-10*dt);
   ai.clk+=dt;const T=ai.clk;
-  const f=p.parent===g[1]?1:0;
+  const f=p.parent===g[1]?1:0,ox=p.parent.position.x,oz=p.parent.position.z;
   let wantSwing=0,armT0=ai.a0[0],armT1=ai.a0[1],yawT=null;
 
   if(u.seated){                                          /* sentados: alumno teclea, el resto respira */
@@ -71,7 +71,7 @@
     if(d<.15){ai.st='idle';ai.t=R(role.idle[0],role.idle[1]);ai.fy=p.rotation.y}
     else{
      const nx=p.position.x+dx/d*ai.spd*dt,nz=p.position.z+dz/d*ai.spd*dt;
-     if(blocked(nx,nz,f)){ai.st='idle';ai.t=R(.4,1.2);ai.fy=p.rotation.y}      /* pared o muro: se detiene y elige otro rumbo */
+     if(blocked(nx+ox,nz+oz,f)){ai.st='idle';ai.t=R(.4,1.2);ai.fy=p.rotation.y}      /* pared o muro: se detiene y elige otro rumbo */
      else{p.position.x=nx;p.position.z=nz;yawT=Math.atan2(dx,dz);
       ai.ph+=dt*(2.6+ai.spd*3.4);wantSwing=Math.min(1,.45+ai.spd*.45);
       if(u.type==='limpieza')armT0=armT1=-.9}}

@@ -72,6 +72,9 @@ const mats={
 
 /* Grupos por piso y techo */
 const g=[new THREE.Group(),new THREE.Group()],roofG=new THREE.Group();g[1].add(roofG);scene.add(g[0],g[1]);g[1].position.y=3;
+/* El pabellón (aulas prefabricadas) se construye en coordenadas locales desde x=0,z=0. PAV es dónde queda en el campus
+   (como en el plano: al oeste del eje del ingreso, bajo la cancha y la loza). Todo lo que use coordenadas del mundo suma PAV. */
+const PAV={x:-76,z:16};g[0].position.set(PAV.x,0,PAV.z);g[1].position.x=PAV.x;g[1].position.z=PAV.z;
 const lists=[{},{},{}],cols=[[],[]],rooms=[];let OX=0;
 const obstacles=[];                                        /* huellas de edificios (anti-atravesar paredes) */
 function obst(x0,x1,z0,z1){obstacles.push([Math.min(x0,x1),Math.max(x0,x1),Math.min(z0,z1),Math.max(z0,z1)])}
