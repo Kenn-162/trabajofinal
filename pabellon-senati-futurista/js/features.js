@@ -40,7 +40,7 @@ pro.innerHTML=`<details open><summary>Ficha del proyecto</summary>
 <dt>Pisos</dt><dd>2 (altura libre ${H} m)</dd><dt>Aulas</dt><dd>${rooms.length-labs} teóricas</dd><dt>Laboratorios</dt><dd>${labs} de cómputo</dd>
 <dt>Baños</dt><dd>2 por piso (H / M)</dd><dt>Escaleras</dt><dd>5 (3 internas, 2 exteriores)</dd><dt>Aforo sentado</dt><dd>${cap} puestos</dd></dl></div>
 <div id="pb" class="pp" hidden></div>
-<div id="pc" class="pp" hidden><dl><dt>Supr / Retroceso</dt><dd>Quita la última</dd><dt>Ctrl + Z</dt><dd>Quita la última</dd><dt>E</dt><dd>Modo eliminar</dd><dt>Esc</dt><dd>Salir del modo</dd><dt>WASD / flechas</dt><dd>Recorrer</dd><dt>Shift</dt><dd>Correr</dd><dt>C</dt><dd>Agacharse</dd><dt>Espacio</dt><dd>Saltar</dd><dt>V</dt><dd>1ª / 3ª persona</dd><dt>Rueda</dt><dd>Zoom en 3ª persona</dd></dl></div>
+<div id="pc" class="pp" hidden><dl><dt>Supr / Retroceso</dt><dd>Quita la última</dd><dt>Ctrl + Z</dt><dd>Quita la última</dd><dt>E</dt><dd>Modo eliminar</dd><dt>Esc</dt><dd>Salir del modo</dd><dt>WASD / flechas</dt><dd>Recorrer</dd><dt>Shift</dt><dd>Correr</dd><dt>E</dt><dd>Sentarte / subir al vehículo (en recorrido)</dd><dt>H · L · M</dt><dd>Bocina · luces · sonido (conduciendo)</dd><dt>C</dt><dd>Agacharse</dd><dt>Espacio</dt><dd>Saltar</dd><dt>V</dt><dd>1ª / 3ª persona</dd><dt>Rueda</dt><dd>Zoom en 3ª persona</dd></dl></div>
 <button id="shot" class="wide">Capturar imagen (PNG · 4K)</button></details>`;
 document.body.appendChild(pro);
 pro.querySelector('.tabs').onclick=e=>{const b=e.target.closest('button');if(!b)return;

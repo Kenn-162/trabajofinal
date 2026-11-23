@@ -21,3 +21,5 @@ Salto y globos de chat
 Cada `player:move` puede incluir `look: {f, o, t, h}` (género 0-1, skin 0-5, piel 0-3, cabello 0-5). El servidor lo valida (solo enteros en rango) y lo reenvía en `player:moved` / `player:joined` / `world:init`. Sin `look`, el cliente usa un aspecto por defecto derivado del nombre de usuario.
 
 `player:move` también puede incluir `c: 1` cuando el jugador está agachado; el servidor lo reenvía tal cual (`player.c`).
+
+`player:move` incluye además `pz` (pose: 0 de pie, 1 sentado, 2 conduciendo un carro, 3 en una moto) y, si `pz` es 2 o 3, `v = {k:'c'|'m', i, r, s, f}` (tipo e índice del vehículo, rumbo, dirección −1..1 y velocidad). El servidor valida tipos y rangos y lo reenvía; cada cliente mueve su copia del mismo vehículo (los índices salen del orden de construcción del campus, así que todos deben tener la misma versión del visor). Hay que reiniciar `npm start` para que el servidor reenvíe estos campos.

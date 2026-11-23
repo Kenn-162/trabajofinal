@@ -83,6 +83,11 @@ io.on('connection', socket => {
     const look = cleanLook(v.look);
     if (look) player.look = look;
     player.c = v.c ? 1 : 0;                                  // agachado
+    // pose: 0 de pie, 1 sentado, 2 carro, 3 moto; v = vehiculo {k:'c'|'m', i indice, r rumbo, s direccion -1..1, f velocidad}
+    player.pz = int(v.pz, 3);
+    const vv = v.v;
+    player.v = player.pz >= 2 && vv && typeof vv === 'object' && (vv.k === 'c' || vv.k === 'm') && Number.isInteger(vv.i) && vv.i >= 0 && vv.i < 2000 && [vv.r, vv.s, vv.f].every(Number.isFinite)
+      ? { k: vv.k, i: vv.i, r: vv.r % (Math.PI * 2), s: clamp(vv.s, -1, 1), f: clamp(vv.f, -40, 40) } : undefined;
     Object.assign(player, { x: clamp(v.x, -200, 200), y: clamp(v.y, -1, 6), z: clamp(v.z, -200, 200), yaw: v.yaw % (Math.PI * 2) });
     socket.broadcast.volatile.emit('player:moved', player);
   });

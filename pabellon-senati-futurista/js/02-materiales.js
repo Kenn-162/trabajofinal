@@ -78,6 +78,15 @@ const PAV={x:-76,z:16};g[0].position.set(PAV.x,0,PAV.z);g[1].position.x=PAV.x;g[
 const lists=[{},{},{}],cols=[[],[]],rooms=[];let OX=0;
 const obstacles=[];                                        /* huellas de edificios (anti-atravesar paredes) */
 function obst(x0,x1,z0,z1){obstacles.push([Math.min(x0,x1),Math.max(x0,x1),Math.min(z0,z1),Math.max(z0,z1)])}
+/* Registros para las interacciones (interaccion.js): sólidos redondos (árboles, postes, vehículos parados…),
+   vehículos conducibles y asientos sueltos (bancas). Se llenan desde 04-entorno.js al construir el campus. */
+const SOL=[],AUTOS=[],ASIENTOS=[];
+const solid=(x,z,r)=>SOL.push([x,z,r]);
+/* materiales/geometrías compartidos de los carros (car() se llama antes de que 04-entorno llegue a su sección de vehículos) */
+const carGlass=std({color:0x1a2531,roughness:.08,metalness:.9,envMapIntensity:1.5,transparent:true,opacity:.38,depthWrite:false});
+const carTire=S(0x15171b,.75),carRim=S(0xc9ced4,.25,{metalness:.9,envMapIntensity:1.2}),carDark=S(0x1b1e24,.6),carSeatM=S(0x2a2d33,.85),carHead=new THREE.MeshBasicMaterial({color:0xfff3c8});
+const carWheelG=new THREE.CylinderGeometry(.34,.34,.26,16),carRimG=new THREE.CylinderGeometry(.21,.21,.28,12);
+
 function R(f,m,x0,x1,y0,y1,z0,z1){(lists[f][m]||(lists[f][m]=[])).push([(x0+x1)/2+OX,(y0+y1)/2,(z0+z1)/2,Math.abs(x1-x0),Math.abs(y1-y0),Math.abs(z1-z0)])}
 function col(f,x0,x1,z0,z1){cols[f].push([Math.min(x0,x1)+OX,Math.max(x0,x1)+OX,Math.min(z0,z1),Math.max(z0,z1)])}
 function wallX(f,x0,x1,z,gaps,t=.12){let c=x0;const a=z-t/2,b=z+t/2;

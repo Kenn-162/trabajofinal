@@ -42,9 +42,9 @@
  function baseFor(name){const r=rng(hash(String(name||'invitado')));return{t:r()*4|0,h:r()*4|0,f:r()<.4?1:0,pack:r()<.5,scale:.97+r()*.06}}
 
  /* ── avatar = raíz (posición + giro) > nodo de inclinación (al correr) > modelo de `person()` ── */
- function armModel(nombre,look){
+ function armModel(nombre,look,sentado){
   const b=baseFor(nombre),l=look?normLook(look):{f:b.f,o:0,t:b.t,h:b.h};
-  const m=person(OUTFITS[l.o].type,false,{skin:TONES[l.t],hair:HAIRC[l.h],fem:!!l.f,pack:b.pack,scale:b.scale*(l.f?.97:1)});
+  const m=person(OUTFITS[l.o].type,!!sentado,{skin:TONES[l.t],hair:HAIRC[l.h],fem:!!l.f,pack:b.pack,scale:b.scale*(l.f?.97:1)});
   m.rotation.y=Math.PI;return m}                                              /* el frente del modelo es +Z; la cámara mira hacia -Z */
  function etiqueta(txt){const c=document.createElement('canvas');c.width=512;c.height=128;const x=c.getContext('2d');
   x.fillStyle='rgba(5,12,24,.86)';x.fillRect(0,0,512,128);x.fillStyle='white';x.textAlign='center';x.font='bold 32px Arial';x.fillText(String(txt).slice(0,32),256,70);
@@ -53,17 +53,34 @@
  window.crearAvatar=function(nombre,conEtiqueta,look){
   const root=new THREE.Group(),node=new THREE.Group(),model=armModel(nombre,look);
   node.add(model);root.add(node);
-  root.userData.av={node,model,sy:model.scale.y,legs:model.userData.legs,arms:model.userData.arms,phase:Math.random()*6,amp:0,air:0,lean:0,cr:0};
+  root.userData.av={node,model,sy:model.scale.y,legs:model.userData.legs,arms:model.userData.arms,phase:Math.random()*6,amp:0,air:0,lean:0,cr:0,nombre,look,pose:0,sitModel:null};
   if(conEtiqueta)root.add(etiqueta(nombre));
   return root};
  window.cambiarAspecto=function(root,nombre,look){
   const a=root.userData.av;if(!a)return;
   a.node.remove(a.model);liberarAvatar(a.model);
-  const m=armModel(nombre,look);a.node.add(m);a.model=m;a.sy=m.scale.y;a.legs=m.userData.legs;a.arms=m.userData.arms};
+  if(a.sitModel){a.node.remove(a.sitModel);liberarAvatar(a.sitModel);a.sitModel=null}
+  a.nombre=nombre;a.look=look;
+  const m=armModel(nombre,look);a.node.add(m);a.model=m;a.sy=m.scale.y;a.legs=m.userData.legs;a.arms=m.userData.arms;
+  if(a.pose)poseAvatar(root,a.pose)};
+
+ /* Pose: 0 de pie · 1 sentado en silla/banca · 2 conduciendo un carro · 3 en una moto. Para sentarse se usa un segundo modelo
+    del MISMO aspecto (person(...,true)) que se crea la primera vez; el de pie se oculta. */
+ window.poseAvatar=function(root,pose){
+  const a=root.userData.av;if(!a)return;pose=pose|0;
+  if(pose&&!a.sitModel){a.sitModel=armModel(a.nombre,a.look,true);a.node.add(a.sitModel)}
+  a.pose=pose;a.model.visible=!pose;if(a.sitModel){a.sitModel.visible=!!pose;
+   if(pose){const L=a.sitModel.userData.legs,R=a.sitModel.userData.arms;
+    L[0].rotation.set(0,0,pose===3?-.2:0);L[1].rotation.set(0,0,pose===3?.2:0);
+    R[0].rotation.x=R[1].rotation.x=pose===2?-.95:pose===3?-1.15:-.8}}
+  if(!pose){a.node.rotation.x=0;a.model.scale.y=a.sy}};
+ /* manos al volante / manillar: giro suave de los brazos (ang en radianes) */
+ window.manosAvatar=function(root,ang){const a=root.userData.av;if(!a||!a.sitModel)return;const R=a.sitModel.userData.arms;R[0].rotation.z=R[1].rotation.z=ang||0};
 
  /* Animación de marcha/carrera: la cadencia y el balanceo crecen con la velocidad; al saltar encoge piernas y sube brazos. */
  window.animarAvatar=function(root,sp,dt,aire,agach){
   const a=root.userData.av;if(!a)return;
+  if(a.pose)return;                                                                      /* sentado/conduciendo: la pose manda */
   const moving=sp>.15,run=sp>3.6;
   a.phase+=dt*(moving?3+sp:0);
   a.cr+=((agach?1:0)*(agach>1?1:agach||0)-a.cr)*(1-Math.exp(-14*dt));                /* 0 de pie · 1 agachado */
@@ -82,7 +99,7 @@
   if(o.isSprite){if(o.material.map)o.material.map.dispose();o.material.dispose()}})};
 
  /* ── estado compartido ─────────────────────────────────────────────── */
- const PJ=window.PJ={third:lsGet(KEY)==='3',bodyYaw:P.yaw,dist:3.4,cur:3.4,broken:false,look:null,crouching:false,crouch:0};
+ const PJ=window.PJ={third:lsGet(KEY)==='3',bodyYaw:P.yaw,dist:3.4,cur:3.4,broken:false,look:null,crouching:false,crouch:0,busy:false,avatar:()=>me};
  let custom=null;try{const s=lsGet(KEYL);if(s)custom=normLook(JSON.parse(s))}catch(e){}
  const curLook=()=>custom||Object.assign({o:0},(b=>({f:b.f,t:b.t,h:b.h}))(baseFor(window.PLAYER_NAME||'invitado')));
  PJ.look=curLook();
@@ -130,11 +147,11 @@
    if(mode!=='walk')say('Guardado · pulsa «Verme en 3ª persona» para ver tu personaje')});
   paintLook()}
 
- addEventListener('keydown',e=>{if(e.repeat||e.ctrlKey||e.metaKey||e.altKey||typing(e)||mode!=='walk')return;
+ addEventListener('keydown',e=>{if(e.repeat||e.ctrlKey||e.metaKey||e.altKey||typing(e)||mode!=='walk'||PJ.busy)return;   /* busy = sentado o conduciendo (interaccion.js) */
   if(e.code==='KeyV')setCam(!PJ.third);
   else if(e.code==='KeyC'){PJ.crouching=!PJ.crouching;syncTouch()}                 /* C: agacharse / levantarse */
   else if(e.code==='Space'&&PJ.crouching){PJ.crouching=false;syncTouch()}});     /* saltar desde agachado = levantarse y saltar */
- cv.addEventListener('wheel',e=>{if(mode!=='walk'||!PJ.third)return;e.preventDefault();PJ.dist=clamp(PJ.dist+e.deltaY*.003,1.6,6.5)},{passive:false});
+ cv.addEventListener('wheel',e=>{if(mode!=='walk'||!PJ.third||PJ.busy)return;e.preventDefault();PJ.dist=clamp(PJ.dist+e.deltaY*.003,1.6,6.5)},{passive:false});
  /* sin esto, soltar la ventana con Shift pulsado dejaba el personaje corriendo para siempre */
  const releaseKeys=()=>{for(const k in keys)keys[k]=0;syncTouch()};
  addEventListener('blur',releaseKeys);document.addEventListener('visibilitychange',()=>{if(document.hidden)releaseKeys()});
@@ -207,7 +224,7 @@
    if(!w&&lastMode==='walk'){PJ.crouching=false;PJ.crouch=0;if(me)me.visible=false;if(camera.fov!==FOV){camera.fov=FOV;camera.updateProjectionMatrix()}}
    lastMode=mode;
    if(tRun)tRun.style.display=tCam.style.display=tCr.style.display=w?'block':'none';
-   const t=w?'<b>'+(PJ.third?'3ª persona':'1ª persona')+'</b> · '+(PJ.crouching?'Agachado':P.run?'Corriendo':P.sp>.3?'Caminando':'Quieto')+' <i>· V cámara · Shift correr · C agacharse · Espacio saltar</i>':'';
+   const t=w&&PJ.busy?(PJ.busyHud||''):w?'<b>'+(PJ.third?'3ª persona':'1ª persona')+'</b> · '+(PJ.crouching?'Agachado':P.run?'Corriendo':P.sp>.3?'Caminando':'Quieto')+' <i>· V cámara · Shift correr · C agacharse · Espacio saltar</i>':'';
    if(t!==last){last=t;hud.innerHTML=t;hud.style.display=w?'block':'none'}
   }catch(e){}
  })();

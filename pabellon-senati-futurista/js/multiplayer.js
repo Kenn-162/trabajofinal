@@ -19,7 +19,7 @@
    g.name='mp-jugador';g.position.set(p.x,p.y,p.z);g.rotation.y=p.yaw;scene.add(g);a={g,t:{},sp:0,px:p.x,pz:p.z,lk:claveAspecto(p.look)};rem.set(p.id,a)}
   /* si ese jugador cambió de género/skin, se rehace su modelo (sin look = aspecto por defecto según su nombre) */
   else if(claveAspecto(p.look)!==a.lk){a.lk=claveAspecto(p.look);window.cambiarAspecto(a.g,p.username,p.look)}
-  Object.assign(a.t,{x:p.x,y:p.y,z:p.z,yaw:p.yaw,c:p.c?1:0})}
+  Object.assign(a.t,{x:p.x,y:p.y,z:p.z,yaw:p.yaw,c:p.c?1:0,pz:p.pz|0,v:p.v||null})}
   function del(id) {
   clearTimeout(timers.get(id));
   timers.delete(id);
@@ -66,10 +66,11 @@
     if(!so||!so.connected)return;
     const p={x:P.x,y:P.y+(window.JUMP?JUMP.h:0),z:P.z,yaw:window.PJ?PJ.bodyYaw:P.yaw};   /* y incluye el salto; yaw = hacia dónde mira tu cuerpo */
     if(window.PJ&&PJ.look)p.look=PJ.look;                              /* género + skin: el servidor lo valida y lo reenvía a los demás */
-    if(window.PJ&&PJ.crouching)p.c=1;                                   /* agachado: los demás también te ven agachado */
-    const lookKey=(window.PJ?claveAspecto(PJ.look):'')+(p.c?'c':'');
+    if(window.INT&&INT.state){const q=INT.state();p.pz=q.pz;if(q.v)p.v=q.v}               /* sentado / conduciendo (interaccion.js) */
+    if(window.PJ&&PJ.crouching&&!p.pz)p.c=1;                                   /* agachado: los demás también te ven agachado */
+    const lookKey=(window.PJ?claveAspecto(PJ.look):'')+(p.c?'c':'')+(p.pz||'');
     const diff=last?Math.max(Math.abs(p.x-last.x),Math.abs(p.y-last.y),Math.abs(p.z-last.z),Math.abs(p.yaw-last.yaw)):1;
-    const moved=!last||lookKey!==lastLook||Math.abs(p.x-last.x)>.015||Math.abs(p.y-last.y)>.015||Math.abs(p.z-last.z)>.015||Math.abs(p.yaw-last.yaw)>.02;
+    const moved=!last||lookKey!==lastLook||Math.abs(p.x-last.x)>.015||Math.abs(p.y-last.y)>.015||Math.abs(p.z-last.z)>.015||Math.abs(p.yaw-last.yaw)>.02||(p.v&&last.v&&(Math.abs(p.v.s-last.v.s)>.02||Math.abs(p.v.f-last.v.f)>.3));
     /* throttle: como mucho cada 60 ms (~16/s) y solo con cambio real; si quedo un resto sin enviar, un ultimo envio exacto al parar */
     if((moved||diff>0)&&now-lastAt>=(moved?60:150)){so.volatile.emit('player:move',p);last=p;lastLook=lookKey;lastAt=now}
     const k=1-Math.exp(-14*dt);                                        /* lerp suave, igual a cualquier FPS */
@@ -77,7 +78,7 @@
      g.rotation.y+=Math.atan2(Math.sin(a.t.yaw-g.rotation.y),Math.cos(a.t.yaw-g.rotation.y))*k;
      /* velocidad real entre cuadros (suavizada) → mueve piernas y brazos; un salto de teletransporte no cuenta como correr */
      const inst=Math.min(Math.hypot(g.position.x-a.px,g.position.z-a.pz)/Math.max(dt,.001),8);a.sp+=(inst-a.sp)*(1-Math.exp(-8*dt));a.px=g.position.x;a.pz=g.position.z;
-     window.animarAvatar(g,a.sp,dt,0,a.t.c)});
+     if(!(window.INT&&INT.remote&&INT.remote(a,dt)))window.animarAvatar(g,a.sp,dt,0,a.t.c)});
    }
    tick();
   }).catch(()=>setState('Sesión iniciada, pero no se pudo cargar el cliente de Socket.io desde '+socketURL+'. Ejecuta "npm start".',false));

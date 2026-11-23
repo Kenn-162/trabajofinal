@@ -282,7 +282,7 @@ solarTex.wrapS=solarTex.wrapT=THREE.RepeatWrapping;
 const solarMat=new THREE.MeshStandardMaterial({map:solarTex,roughness:.35,metalness:.55,envMapIntensity:1.1});
 const solarFrame=S(0x17406b,.45,{metalness:.6,envMapIntensity:.8});
 function carport(cx,cz,len=23){ /* pérgola fotovoltaica doble */
-  for(const dx of[-len/2+1.1,0,len/2-1.1]){cylM(solarFrame,.28,.34,4.7,cx+dx,2.35,cz-2.3,10);cylM(solarFrame,.28,.34,4.7,cx+dx,2.35,cz+2.3,10)}
+  for(const dx of[-len/2+1.1,0,len/2-1.1]){cylM(solarFrame,.28,.34,4.7,cx+dx,2.35,cz-2.3,10);cylM(solarFrame,.28,.34,4.7,cx+dx,2.35,cz+2.3,10);solid(cx+dx,cz-2.3,.36);solid(cx+dx,cz+2.3,.36)}
   const roof=new THREE.Mesh(new THREE.BoxGeometry(len,.16,5.6),solarMat);roof.position.set(cx,4.78,cz);roof.rotation.x=.10;roof.castShadow=true;scene.add(roof);
   const lip=new THREE.Mesh(new THREE.BoxGeometry(len,.5,.18),solarFrame);lip.position.set(cx,4.55,cz-2.72);scene.add(lip)}
 carport(-95,-146);carport(-52,-146);carport(-95,-124);carport(-52,-124);
@@ -300,7 +300,7 @@ function lampPost(x,z,ry=0){const t=new THREE.Group();
   for(const dx of[-1.05,1.05]){const h=new THREE.Mesh(new THREE.BoxGeometry(.44,.12,.22),lampHeadMat);h.position.set(dx,6.18,0);t.add(h);
     const l=new THREE.PointLight(0xffd9a0,0,22,1.8);l.position.set(dx,5.9,0);t.add(l);lampsL.push(l);
     const gs=new THREE.Sprite(new THREE.SpriteMaterial({map:lampGlowTex,transparent:true,opacity:0,depthWrite:false,blending:THREE.AdditiveBlending}));gs.scale.set(3.8,3.8,1);gs.position.set(dx,6.15,0);t.add(gs);lampGlows.push(gs)}
-  t.position.set(x,0,z);t.rotation.y=ry;scene.add(t)}
+  t.position.set(x,0,z);t.rotation.y=ry;scene.add(t);solid(x,z,.3)}
 lampPost(-77,-157.5,0);lampPost(-29,-157.5,0);lampPost(-118,-132,Math.PI/2);lampPost(-13,-132,Math.PI/2);
 /* ── AUDITORIO (muro de ladrillo rojo + gran banner) ─────── */
 const brickTex=tex(512,512,(c,w,h)=>{c.fillStyle='#38201a';c.fillRect(0,0,w,h);
@@ -705,7 +705,7 @@ obst(102.5,125.5,75,99); /* Torre C */
 
 /* ── ÁRBOLES Y PALMERAS ────────────────────────────────────── */
 function tree(x,z,s=1){const t=new THREE.Group(),tr=new THREE.Mesh(new THREE.CylinderGeometry(.15*s,.24*s,2.5*s,8),S(0x5d4028,.95));tr.position.y=1.25*s;tr.castShadow=true;t.add(tr);
- for(let k=0;k<5;k++){const m=new THREE.Mesh(new THREE.IcosahedronGeometry((1.35-k*.16)*s,1),S(fol[Math.abs(k+(x|0))%4],1,{envMapIntensity:.18}));m.position.set((Math.random()-.5)*.95*s,(2.9+k*.55)*s,(Math.random()-.5)*.95*s);m.castShadow=true;t.add(m)}t.position.set(x,0,z);scene.add(t)}
+ for(let k=0;k<5;k++){const m=new THREE.Mesh(new THREE.IcosahedronGeometry((1.35-k*.16)*s,1),S(fol[Math.abs(k+(x|0))%4],1,{envMapIntensity:.18}));m.position.set((Math.random()-.5)*.95*s,(2.9+k*.55)*s,(Math.random()-.5)*.95*s);m.castShadow=true;t.add(m)}t.position.set(x,0,z);scene.add(t);solid(x,z,.28*s+.1)}
 for(const [tx,tz,ts] of [[-118,-68,.9],[-31,-70,.8],[-8,-64,1],[-120,30,1.1],[-100,44,.85],[-30,20,.7],[66,44,.9],[96,58,.75]])tree(tx,tz,ts);
 function palm(x,z,s=1){const t=new THREE.Group();
   const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.15*s,.23*s,4.7*s,8),S(0x8a6f4d,.95));trunk.position.y=2.35*s;trunk.castShadow=true;t.add(trunk);
@@ -715,18 +715,56 @@ function palm(x,z,s=1){const t=new THREE.Group();
     const frond=new THREE.Mesh(frondGeo,new THREE.MeshStandardMaterial({color:palmLeaf[k%3],roughness:.8,metalness:0,side:THREE.DoubleSide,envMapIntensity:.14}));
     frond.rotation.z=-(.18+Math.random()*.5);frond.rotation.x=(Math.random()-.5)*.28;frond.castShadow=true;pivot.add(frond)}
   for(let k=0;k<3;k++){const nut=new THREE.Mesh(new THREE.SphereGeometry(.1*s,6,5),S(0x5a4632,.9));nut.position.set((Math.random()-.5)*.3*s,-.12*s,(Math.random()-.5)*.3*s);crown.add(nut)}
-  t.position.set(x,0,z);t.rotation.y=Math.random()*6.28;scene.add(t)}
+  t.position.set(x,0,z);t.rotation.y=Math.random()*6.28;scene.add(t);solid(x,z,.3*s)}
 palm(-12.5,-157.5,1.15);palm(12.5,-157.5,1.15);         /* portal de ingreso */
 palm(28.5,28.5,.9);palm(-96,29,.85);                     /* marco de artes gráficas */
 
 /* ── VEHÍCULOS + CONOS ───────────────────────────────────── */
-function car(x,z,color,ry=0,scl=1){const t=new THREE.Group();
-  const body=new THREE.Mesh(new THREE.BoxGeometry(4.15*scl,.92*scl,1.78*scl),S(color,.32,{metalness:.62,envMapIntensity:.95}));body.position.y=.74*scl;body.castShadow=true;t.add(body);
-  const cabin=new THREE.Mesh(new THREE.BoxGeometry(2.2*scl,.75*scl,1.6*scl),S(color,.24,{metalness:.55,envMapIntensity:.9}));cabin.position.set(-.18*scl,1.32*scl,0);cabin.castShadow=true;t.add(cabin);
-  const glassC=new THREE.Mesh(new THREE.BoxGeometry(2.0*scl,.42*scl,1.64*scl),std({color:0x1a2531,roughness:.08,metalness:.9,envMapIntensity:1.5}));glassC.position.set(-.18*scl,1.3*scl,0);t.add(glassC);
-  const wheelG=new THREE.CylinderGeometry(.34*scl,.34*scl,.3*scl,12);
-  [[-1.32,-.86],[1.32,-.86],[-1.32,.86],[1.32,.86]].forEach(([wx,wz])=>{const w=new THREE.Mesh(wheelG,S(0x15171b,.7));w.rotation.x=Math.PI/2;w.position.set(wx*scl,.33*scl,wz*scl);t.add(w)});
-  t.position.set(x,0,z);t.rotation.y=ry;scene.add(t)}
+/* Carro con ruedas que giran/doblan, cabina con vidrios transparentes e interior (se ve al conductor), luces de freno.
+   Frente = +x · conductor a la izquierda (lado -z, como en Perú: volante a la izquierda). Se registra en AUTOS. */
+function car(x,z,color,ry=0,scl=1){
+  const t=new THREE.Group(),body=new THREE.Group();t.add(body);
+  const paint=S(color,.32,{metalness:.62,envMapIntensity:.95}),paint2=S(color,.24,{metalness:.55,envMapIntensity:.9});
+  const add=(g,m,px,py,pz,par=body)=>{const q=new THREE.Mesh(g,m);q.position.set(px,py,pz);q.castShadow=true;par.add(q);return q};
+  const B=(w,h,d)=>new THREE.BoxGeometry(w,h,d);
+  add(B(1.33,.68,1.78),paint,1.41,.62,0);                                      /* capó */
+  add(B(.93,.68,1.78),paint,-1.61,.62,0);                                      /* maletero */
+  for(const pz of[-.81,.81])add(B(1.9,.94,.16),paint,-.2,.75,pz);              /* puertas / costados (el interior queda abierto) */
+  add(B(.1,.7,1.62),carDark,.75,.62,0);add(B(.1,.6,1.62),carDark,-1.15,.6,0);  /* mamparos delantero y trasero */
+  add(B(.16,.3,1.74),carDark,2.07,.5,0);add(B(.16,.3,1.74),carDark,-2.07,.5,0); /* parachoques */
+  add(B(.05,.2,.8),carDark,2.1,.74,0);                                         /* parrilla */
+  /* cabina: techo + pilares + vidrios transparentes (el interior se ve) */
+  add(B(2.1,.07,1.62),paint2,-.18,1.69,0);
+  for(const [px,pz] of[[.78,.76],[.78,-.76],[-1.14,.76],[-1.14,-.76]])add(B(.09,.5,.09),paint2,px,1.43,pz);
+  for(const pz of[.8,-.8])add(B(.08,.48,.07),paint2,-.2,1.43,pz);
+  add(B(1.9,.42,1.56),carGlass,-.18,1.41,0);
+  /* interior */
+  add(B(2.3,.05,1.55),carDark,-.1,.32,0);
+  add(B(.5,.3,1.56),carDark,.62,1.0,0);                                         /* tablero */
+  for(const pz of[-.42,.42]){add(B(.5,.14,.46),carSeatM,-.3,.5,pz);add(B(.12,.62,.46),carSeatM,-.6,.86,pz)}
+  add(B(.5,.14,1.4),carSeatM,-1.02,.5,0);add(B(.12,.55,1.4),carSeatM,-1.28,.84,0);
+  /* volante (gira al doblar) */
+  const steerG=new THREE.Group();steerG.position.set(.34,1.02,-.42);steerG.rotation.z=.42;body.add(steerG);
+  const spin=new THREE.Group();steerG.add(spin);
+  const ring=add(new THREE.TorusGeometry(.17,.022,8,18),carDark,0,0,0,spin);ring.rotation.y=Math.PI/2;
+  add(B(.02,.3,.03),carDark,0,0,0,spin);add(B(.02,.03,.3),carDark,0,0,0,spin);
+  /* faros, luces traseras (freno), placas, espejos */
+  for(const pz of[-.62,.62])add(B(.06,.16,.36),carHead,2.1,.78,pz);
+  const tailM=new THREE.MeshBasicMaterial({color:0x6a0d0d});
+  for(const pz of[-.62,.62])add(B(.06,.15,.4),tailM,-2.1,.82,pz);
+  add(B(.03,.14,.42),S(0xf2f2f2,.6),2.16,.56,0);add(B(.03,.14,.42),S(0xf2f2f2,.6),-2.16,.56,0);
+  for(const pz of[-.97,.97])add(B(.12,.1,.18),paint2,.62,1.24,pz);
+  /* ruedas: pivote (dirección) > giro > llanta + aro con rayos para que se note que giran */
+  const wheels=[];
+  for(const [wx,wz] of[[1.32,-.86],[1.32,.86],[-1.32,-.86],[-1.32,.86]]){
+    const pv=new THREE.Group();pv.position.set(wx,.34,wz);t.add(pv);const sp=new THREE.Group();pv.add(sp);
+    const w=add(carWheelG,carTire,0,0,0,sp);w.rotation.x=Math.PI/2;const r=add(carRimG,carRim,0,0,wz>0?.01:-.01,sp);r.rotation.x=Math.PI/2;
+    add(B(.5,.07,.3),carDark,0,0,wz>0?.14:-.14,sp);add(B(.07,.5,.3),carDark,0,0,wz>0?.14:-.14,sp);
+    wheels.push({pv,sp,front:wx>0})}
+  const anchor=new THREE.Group();anchor.position.set(-.3,.25,-.42);body.add(anchor);       /* asiento del conductor */
+  t.scale.setScalar(scl);t.position.set(x,0,z);t.rotation.y=ry;scene.add(t);
+  t.userData.veh={kind:'car',color,scl,body,wheels,steerG:spin,tailM,anchor,eye:[-.3,1.32,-.42],hr:.95,hx:[-1.2,0,1.2],circ:.95,dooY:0};
+  AUTOS.push(t);return t}
 
 /* ── MOTOS LINEALES (instanciadas: una malla por pieza para todas las motos) ───────── */
 const MOTO_COLORS=[0xc4231a,0x15171b,0x1646a0,0xe8e8e8,0xe8641e,0x1d6b3a,0x9aa1a8,0xd4af37];
@@ -750,7 +788,7 @@ function buildMotos(list){ /* list: [x,z,color,ry] — largo de la moto sobre su
     [R(new THREE.BoxGeometry(.58,.07,.09),-.34,.3,-.17),chrome],             /* escape */
     [R(new THREE.BoxGeometry(.4,.05,.06),.42,.5,0,0,0,.42),paint,true]       /* guardafango delantero */
   ];
-  const dummy=new THREE.Object3D(),mp=new THREE.Matrix4(),col=new THREE.Color();
+  const dummy=new THREE.Object3D(),mp=new THREE.Matrix4(),col=new THREE.Color();const ims=[];
   parts.forEach(([pr,mat,tinted])=>{
     const im=new THREE.InstancedMesh(pr.g,mat,N);im.castShadow=true;im.receiveShadow=true;
     list.forEach(([x,z,c,ry],i)=>{
@@ -760,7 +798,8 @@ function buildMotos(list){ /* list: [x,z,color,ry] — largo de la moto sobre su
       if(tinted){col.setHex(c);im.setColorAt(i,col)}
     });
     im.instanceMatrix.needsUpdate=true;if(im.instanceColor)im.instanceColor.needsUpdate=true;
-    scene.add(im)});
+    ims.push(im);scene.add(im)});
+  window.__motoSet={ims,list:list.map(a=>a.slice())};          /* interaccion.js saca de aquí la moto que subes */
 }
 function cone(x,z){const b=new THREE.Mesh(new THREE.BoxGeometry(.5,.07,.5),S(0xe8641e,.6));b.position.set(x,.035,z);b.castShadow=true;scene.add(b);
   const c1=new THREE.Mesh(new THREE.ConeGeometry(.24,.72,10),S(0xe8641e,.5));c1.position.set(x,.43,z);c1.castShadow=true;scene.add(c1);
@@ -812,7 +851,7 @@ function plant(x,z,s=1){const p=new THREE.Mesh(new THREE.CylinderGeometry(.3*s,.
     if(two){mt.push([cx-.62,zc+(rnd()-.5)*.7,c1,face]);mt.push([cx+.62,zc+(rnd()-.5)*.7,MOTO_COLORS[rnd()*MOTO_COLORS.length|0],face])}
     else mt.push([cx,zc+(rnd()-.5)*.8,c1,face])}});
   buildMotos(mt)}}
-function bench(x,z){box(0xb98a58,x-.9,x+.9,.45,.5,z-.25,z+.25);box(0xb98a58,x-.9,x+.9,.7,.75,z+.2,z+.25);box(0x333840,x-.85,x-.8,0,.45,z-.2,z+.2);box(0x333840,x+.8,x+.85,0,.45,z-.2,z+.2)}
+function bench(x,z){ASIENTOS.push({x:x-.45,y:.5,z,yaw:0,kind:'banca'},{x:x+.45,y:.5,z,yaw:0,kind:'banca'});solid(x-.9,z,.3);solid(x,z,.3);solid(x+.9,z,.3);box(0xb98a58,x-.9,x+.9,.45,.5,z-.25,z+.25);box(0xb98a58,x-.9,x+.9,.7,.75,z+.2,z+.25);box(0x333840,x-.85,x-.8,0,.45,z-.2,z+.2);box(0x333840,x+.8,x+.85,0,.45,z-.2,z+.2)}
 [8,28,48,64].forEach(x=>bench(x,10));
 /* postes netos de madera con doble brazo (antiguos) retirados: ahora hay postes rojos */
 
