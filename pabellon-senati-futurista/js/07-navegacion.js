@@ -18,13 +18,15 @@ const blocked=(x,z,f)=>cols[f].some(c=>x>c[0]-.28&&x<c[1]+.28&&z>c[2]-.28&&z<c[3
 /* Caminar / correr: Shift = correr (solo hacia delante o de lado). La velocidad acelera y frena suave (inercia)
    y la diagonal ya no es más rápida. P.sp = velocidad actual (m/s), P.run = true mientras se corre de verdad. */
 const SPD_WALK=2.3,SPD_RUN=5.8;let mvx=0,mvz=0;
+/* altura del suelo en plataformas elevadas (estadio/loza): sube suave en la rampa de los portones */
+function groundH(x,z){let h=0;const R=window.RAISED;if(R)for(const r of R)if(x>r.x0&&x<r.x1&&z>r.z0&&z<r.z1){const d=Math.min(x-r.x0,r.x1-x,z-r.z0,r.z1-z);h=Math.max(h,r.h*Math.min(1,d/(r.ramp||.01)))}return h}
 function walkStep(dt){const fw=(keys.w||keys.arrowup?1:0)-(keys.s||keys.arrowdown?1:0),st=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0);
  let ix=-Math.sin(P.yaw)*fw+Math.cos(P.yaw)*st,iz=-Math.cos(P.yaw)*fw-Math.sin(P.yaw)*st;const n=Math.hypot(ix,iz);if(n>1){ix/=n;iz/=n}
  const f=P.y>1.5?1:0,cr=!!(window.PJ&&PJ.crouching),want=!!keys.shift&&fw>=0&&n>0&&!cr,base=(want?SPD_RUN:SPD_WALK)*(fw<0&&!st?.7:1)*(cr?.45:1),k=1-Math.exp(-(n?9:14)*dt);
  mvx+=(ix*base-mvx)*k;mvz+=(iz*base-mvz)*k;
  const nx=P.x+mvx*dt,nz=P.z+mvz*dt;if(!blocked(nx,P.z,f))P.x=Math.max(-150,Math.min(150,nx));else mvx=0;if(!blocked(P.x,nz,f))P.z=Math.max(-175,Math.min(98,nz));else mvz=0;
  P.sp=Math.hypot(mvx,mvz);P.run=want&&P.sp>(SPD_WALK+SPD_RUN)/2;
- const lz=P.z-PAV.z,zn=zones.find(q=>P.x>q[0]&&P.x<q[1]&&lz*q[2]>CW&&lz*q[2]<q[3]+1);if(zn){P.y=Math.max(0,Math.min(3,(zn[3]-lz*zn[2])/5.4*3));P.fl=P.y>1.5?2:1}else P.y=P.fl==2?3:0;
+ const lz=P.z-PAV.z,zn=zones.find(q=>P.x>q[0]&&P.x<q[1]&&lz*q[2]>CW&&lz*q[2]<q[3]+1);if(zn){P.y=Math.max(0,Math.min(3,(zn[3]-lz*zn[2])/5.4*3));P.fl=P.y>1.5?2:1}else P.y=P.fl==2?3:groundH(P.x,P.z);
  camera.position.set(P.x,P.y+1.65,P.z);camera.rotation.set(P.pitch,P.yaw,0,'YXZ')}
 const typingTarget=e=>e.target&&e.target.closest&&e.target.closest('input,textarea,select,[contenteditable="true"]');addEventListener('keydown',e=>{if(typingTarget(e))return;keys[e.key.toLowerCase()]=1;if(e.key.startsWith('Arrow'))e.preventDefault()});addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=0});
 pad.querySelectorAll('button').forEach(b=>{const k=b.dataset.k;b.onpointerdown=()=>keys[k]=1;b.onpointerup=b.onpointerleave=()=>keys[k]=0});

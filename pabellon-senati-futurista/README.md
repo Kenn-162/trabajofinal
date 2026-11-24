@@ -87,6 +87,7 @@ La metodología completa para repetir este upgrade en cualquier escena three.js 
 
 
 ## Últimos cambios
+- **Rediseño del mapa:** nueva pista de asfalto al oeste (6 m, igual que la pista sur), veredas peatonales, estadio y loza elevados 50 cm (mismo nivel que comedor y auditorio) con rampa de acceso, loza con el largo igual al ancho de la cancha (2 canchas de vóley), todo el complejo cercado con rejas y portones, y terraza del comedor con 8 mesas y 32 sillas donde puedes sentarte. Pabellón desplazado 6 m al sur y anexo estrechado para dar espacio a la pista.
 - **Campus reordenado según el plano:** el pabellón de aulas prefabricadas pasa al oeste del eje del ingreso (el camino llega a su extremo este), con Estudios Generales a su lado; encima quedan la cancha de fútbol (60 × 38 m, con césped y líneas) y la loza deportiva; más abajo, Artes Gráficas. La pirámide, las torres A/B/C, el auditorio, el comedor y el parque no se movieron. La cancha y la pareja que conversa ya aparecen (antes los borraba `populate()`).
 - **NPC con vida, agacharse y torre nueva:** cada rol se mueve según su función, tecla C para agacharse y las torres A/B/C replican la torre SENATI de las fotos (concreto gris, columnas altas con logo, fachada de vidrio con cruces de acero y losas claras, corona abierta en la azotea).
 - **Personaje propio y cámaras:** avatar con el diseño de las demás personas, vista en 1ª / 3ª persona (V), modo correr mejorado y todo el proyecto reunido en esta carpeta.

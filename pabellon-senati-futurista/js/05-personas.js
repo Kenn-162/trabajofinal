@@ -48,16 +48,16 @@ function populate(){clearAll();
   r.seats.filter(()=>Math.random()<(r.lab?.45:.5)).forEach(st=>put(r.f,'alumno',r.X(st.u),r.Z(st.v),fy,true))}
  const types=['alumno','persona','profesor','alumno'];
  for(const f of[0,1]){for(let k=0;k<6;k++){const p=put(f,types[k%4],0,0,0,false);walkers.push({p,z:(Math.random()-.5)*1.3,a:2+Math.random()*10,b:40+Math.random()*24,x:10+Math.random()*30,v:(.8+Math.random()*.5)*(Math.random()<.5?1:-1),t:Math.random()*6})}
-  const c=put(f,'limpieza',0,0,0,false);walkers.push({p:c,z:.5,a:3,b:63,x:20,v:.6,t:0});put(f,'limpieza',50,2,Math.PI,false)}
- for(let k=0;k<5;k++)put(0,types[k%4],4+k*13,10+Math.random()*2,Math.random()*6,false);   /* frente a la fachada sur del pabellón */
+  const c=put(f,'limpieza',0,0,0,false);walkers.push({p:c,z:.5,a:3,b:63,x:20,v:.6,t:0});put(f,'limpieza',50,3.5,Math.PI,false)}
+ for(let k=0;k<5;k++)put(0,types[k%4],4+k*13,9.6+Math.random()*1.3,Math.random()*6,false);   /* frente a la fachada sur del pabellón */
  if(window.__pabellonCampus)window.__pabellonCampus.forEach(([x,z,t,ry,st])=>putW(0,t,x,z,ry,st))
  /* cancha de fútbol: equipo azul vs blanco + referí */
- const C=window.__cancha||{x:-93,z:-14,hl:30,hw:19};                                   /* la cancha se define en 04-entorno.js */
- [[-24,6],[-12,-10],[2,9],[14,-6],[-20,-12],[10,12],[-2,0]].forEach(([dx,dz],i)=>{putW(0,i%3==2?'profesor':(i%2?'alumno':'persona'),C.x+dx,C.z+dz,Math.random()*6.28,false)});
+ const C=window.__cancha||{x:-87,z:-10,hl:30,hw:19,y:.5};                                   /* la cancha se define en 04-entorno.js */
+ [[-24,6],[-12,-10],[2,9],[14,-6],[-20,-12],[10,12],[-2,0]].forEach(([dx,dz],i)=>{putW(0,i%3==2?'profesor':(i%2?'alumno':'persona'),C.x+dx,C.z+dz,Math.random()*6.28,false).position.y=C.y||0});
  for(const fx of[C.x-C.hl+3,C.x+C.hl-3]){const p=putW(0,'alumno',fx,C.z+(Math.random()-.5)*8,Math.random()*6.28,false);
-  walkers.push({p,world:1,z:C.z+(Math.random()-.5)*8,a:C.x-C.hl+2,b:C.x+C.hl-2,x:fx,v:(.7+Math.random()*.5)*(Math.random()<.5?1:-1),t:Math.random()*6})}
+  p.position.y=C.y||0;walkers.push({p,y:C.y||0,world:1,z:C.z+(Math.random()-.5)*8,a:C.x-C.hl+2,b:C.x+C.hl-2,x:fx,v:(.7+Math.random()*.5)*(Math.random()<.5?1:-1),t:Math.random()*6})}
  /* dos estudiantes conversando junto al ingreso */
  putW(0,'alumno',2.6,-8.4,Math.PI/2,false).userData.talk=true;putW(0,'persona',3.6,-8.1,-Math.PI/2,false).userData.talk=true;
 }
 function animate(dt){for(const w of walkers){w.x+=w.v*dt;w.t+=dt*4;if(w.x>w.b){w.x=w.b;w.v=-Math.abs(w.v)}if(w.x<w.a){w.x=w.a;w.v=Math.abs(w.v)}
- w.p.position.set(w.x-(w.world?PAV.x:0),0,w.z-(w.world?PAV.z:0));w.p.rotation.y=w.v>0?Math.PI/2:-Math.PI/2;const s=Math.sin(w.t)*.6,u=w.p.userData;u.legs[0].rotation.x=s;u.legs[1].rotation.x=-s;u.arms[0].rotation.x=-s*.7;u.arms[1].rotation.x=s*.7}}
+ w.p.position.set(w.x-(w.world?PAV.x:0),w.y||0,w.z-(w.world?PAV.z:0));w.p.rotation.y=w.v>0?Math.PI/2:-Math.PI/2;const s=Math.sin(w.t)*.6,u=w.p.userData;u.legs[0].rotation.x=s;u.legs[1].rotation.x=-s;u.arms[0].rotation.x=-s*.7;u.arms[1].rotation.x=s*.7}}

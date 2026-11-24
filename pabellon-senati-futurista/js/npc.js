@@ -34,15 +34,20 @@
   const u=p.userData,role=ROLE[u.type]||ROLE.persona;
   const ai=u.ai={role,hx:p.position.x,hz:p.position.z,rad:u.rad!==undefined?u.rad:role.rad,st:'idle',t:R(0,2.5),tx:0,tz:0,spd:R(role.speed[0],role.speed[1]),
    ph:R(0,6.28),clk:R(0,50),a0:[u.arms[0].rotation.x,u.arms[1].rotation.x],fy:p.rotation.y,swing:0,broom:null};
+  ai.pl=inP(p.position.x+p.parent.position.x,p.position.z+p.parent.position.z);
   if(u.type==='limpieza'&&!u.seated)ai.broom=addBroom(p);
   return ai}
 
+ /* los NPC no suben a la plataforma del estadio (ni bajan de ella si empezaron allí): solo entra el jugador */
+ const RP=()=>window.RAISED&&window.RAISED[0];
+ const inP=(x,z)=>{const r=RP();return !!r&&x>r.x0&&x<r.x1&&z>r.z0&&z<r.z1};
+ const nblocked=(ai,x,z,f)=>blocked(x,z,f)||(inP(x,z)!==!!ai.pl);
  function pickTarget(p,ai){
   const f=p.parent===g[1]?1:0,ox=p.parent.position.x,oz=p.parent.position.z;   /* p.position es local al grupo; blocked() usa el mundo */
   for(let i=0;i<8;i++){
    const a=R(0,6.283),d=R(.35,1)*ai.rad,tx=ai.hx+Math.sin(a)*d,tz=ai.hz+Math.cos(a)*d;
-   let ok=!blocked(tx+ox,tz+oz,f);                                             /* el destino y 3 puntos del camino deben estar libres */
-   for(let s=1;ok&&s<4;s++)ok=!blocked(p.position.x+(tx-p.position.x)*s/4+ox,p.position.z+(tz-p.position.z)*s/4+oz,f);
+   let ok=!nblocked(ai,tx+ox,tz+oz,f);                                             /* el destino y 3 puntos del camino deben estar libres */
+   for(let s=1;ok&&s<4;s++)ok=!nblocked(ai,p.position.x+(tx-p.position.x)*s/4+ox,p.position.z+(tz-p.position.z)*s/4+oz,f);
    if(ok){ai.tx=tx;ai.tz=tz;return true}}
   return false}
 
@@ -71,7 +76,7 @@
     if(d<.15){ai.st='idle';ai.t=R(role.idle[0],role.idle[1]);ai.fy=p.rotation.y}
     else{
      const nx=p.position.x+dx/d*ai.spd*dt,nz=p.position.z+dz/d*ai.spd*dt;
-     if(blocked(nx+ox,nz+oz,f)){ai.st='idle';ai.t=R(.4,1.2);ai.fy=p.rotation.y}      /* pared o muro: se detiene y elige otro rumbo */
+     if(nblocked(ai,nx+ox,nz+oz,f)){ai.st='idle';ai.t=R(.4,1.2);ai.fy=p.rotation.y}      /* pared o muro: se detiene y elige otro rumbo */
      else{p.position.x=nx;p.position.z=nz;yawT=Math.atan2(dx,dz);
       ai.ph+=dt*(2.6+ai.spd*3.4);wantSwing=Math.min(1,.45+ai.spd*.45);
       if(u.type==='limpieza')armT0=armT1=-.9}}

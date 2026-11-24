@@ -73,6 +73,7 @@
   seg(XE,ZN,XE,ZS);                                   /* este */
   seg(XE,ZS,XW,ZS);                                   /* sur */
   seg(XW,ZS,XW,ZN);                                   /* oeste */
+  (window.__fences||[]).forEach(a=>seg(a[0],a[1],a[2],a[3],true));   /* estadio y loza (definidas en 04-entorno.js) */
 
   /* postes (instanciados) */
   {const pg=new THREE.BoxGeometry(.16,FH+.15,.16),im=new THREE.InstancedMesh(pg,frameM,posts.length),d=new THREE.Object3D();

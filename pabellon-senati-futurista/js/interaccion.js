@@ -86,7 +86,8 @@
  const fwd=ry=>[Math.cos(ry),-Math.sin(ry)];
 
  /* ════════ 3 · colisiones ════════ */
- const PAVB=[PAV.x-4,PAV.x+L+4,PAV.z-D-2.6,PAV.z+D+2.6];            /* el pabellón entero (ni carros ni motos entran) */
+ const PAVB=[PAV.x-4,PAV.x+L+4,PAV.z-D-2.6,PAV.z+D+2.6];
+ const PLB=(window.RAISED||[]).map(r=>[r.x0-.4,r.x1+.4,r.z0-.4,r.z1+.4]);   /* plataforma del estadio: no entran vehículos */            /* el pabellón entero (ni carros ni motos entran) */
  const WB=[-168,166,-170,96];                                        /* límites del mundo */
  const tmp=[];
  function otherCircles(self,out){out.length=0;
@@ -98,6 +99,7 @@
  function solidAt(x,z,r){
   for(const b of OBS)if(x>b[0]-r&&x<b[1]+r&&z>b[2]-r&&z<b[3]+r)return true;
   if(x>PAVB[0]-r&&x<PAVB[1]+r&&z>PAVB[2]-r&&z<PAVB[3]+r)return true;
+  for(const b of PLB)if(x>b[0]-r&&x<b[1]+r&&z>b[2]-r&&z<b[3]+r)return true;
   for(const c of CIRC)if((x-c[0])**2+(z-c[1])**2<(c[2]+r)**2)return true;
   return false}
  /* resuelve choques de los círculos del vehículo contra todo; devuelve la fuerza del impacto (m/s) */
@@ -118,7 +120,7 @@
      else{const l=cx-b0,rr=b1-cx,t=cz-b2,bt=b3-cz,m=Math.min(l,rr,t,bt);
       if(m===l)push(-1,0,l+r);else if(m===rr)push(1,0,rr+r);else if(m===t)push(0,-1,t+r);else push(0,1,bt+r)}};
     for(const b of OBS)box(b[0],b[1],b[2],b[3]);
-    box(PAVB[0],PAVB[1],PAVB[2],PAVB[3]);
+    box(PAVB[0],PAVB[1],PAVB[2],PAVB[3]);for(const b of PLB)box(b[0],b[1],b[2],b[3]);
     /* círculos: árboles, postes, bancas, columnas */
     const ci=(x,z,rr)=>{const dx=cx-x,dz=cz-z,dd=dx*dx+dz*dz,R=r+rr;if(dd<R*R&&dd>1e-8){const dist=Math.sqrt(dd);push(dx/dist,dz/dist,R-dist)}};
     for(const c of CIRC){if(Math.abs(cx-c[0])>5||Math.abs(cz-c[1])>5)continue;ci(c[0],c[1],c[2])}
