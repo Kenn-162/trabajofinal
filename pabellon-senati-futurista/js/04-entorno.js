@@ -572,10 +572,10 @@ obst(58,70.4,-22,-9);         /* contenedores */
 /* ── ESTADIO: CANCHA DE FÚTBOL + LOZA DEPORTIVA, sobre una plataforma elevada 1.20 m y cercada con rejas ──
    Plano del usuario: la plataforma está al nivel del comedor y el auditorio (sobresale ~50 cm de la pista y las veredas).
    El largo de la loza = el ancho de la cancha (38 m). Se entra por dos portones al norte (lado de la vereda). */
-const PL={x0:-119.5,x1:-27.5,z0:-30.4,z1:10.8,h:1.2};
+const PL={x0:-105,x1:-13,z0:-30.4,z1:10.8,h:1.2};      /* el borde este queda a 4 m de la calzada (el ancho de una vereda) */
 window.RAISED=[{x0:PL.x0,x1:PL.x1,z0:PL.z0,z1:PL.z1,h:PL.h,ramp:.02}];       /* se sube por las escaleras de los portones (js/04c-ajustes.js, bloque «Estadio elevado») */       /* la navegación sube/baja suavemente en los portones */
 const fieldLineMat=new THREE.MeshBasicMaterial({color:0xf2f4ee,transparent:true,opacity:.92,depthWrite:false});
-const FC={x:-87,z:-9.8},HL=30,HW=19;                                 /* centro de la cancha, mitad de largo y de ancho (60 × 38 m) */
+const FC={x:PL.x0+32.5,z:-9.8},HL=30,HW=19;                                 /* centro de la cancha, mitad de largo y de ancho (60 × 38 m) */
 window.__cancha={x:FC.x,z:FC.z,hl:HL,hw:HW,y:PL.h};
 const DIV=FC.x+HL+2.5;                                               /* reja que separa cancha y loza */
 box(0xc3c7ca,PL.x0,PL.x1,0,PL.h,PL.z0,PL.z1);                        /* losa de concreto */
@@ -626,7 +626,9 @@ asphalt(LZ.x-11,LZ.x+11,FC.z-HW,FC.z+HW,8);
   m.position.set((x0+x1)/2,.035,(z0+z1)/2);m.receiveShadow=true;scene.add(m)};
  vereda(-123,-9,-36,PL.z0-.5);                 /* E-O: frente del comedor, entre el parque y el estadio, hasta la calzada */
  vereda(-72,-67.6,-62,-36);                    /* N-S: costado este del comedor */
- vereda(-123,PL.x0-.5,-62,PL.z1+1);            /* N-S: junto a la pista oeste */
+ vereda(-123,-119.5,-62,PL.z1+1);            /* N-S: junto a la pista oeste */
+ lawn(-119.5,PL.x0-.12,PL.z0,PL.z1,.012);       /* área verde entre la vereda oeste y el estadio */
+ for(const [tx,tz] of[[-113,-22],[-113,-10],[-113,2],[-109,-16],[-109,-4]])tree(tx,tz,.85);
 }
 /* ── COMEDOR AL AIRE LIBRE: mesas y sillas amarillas frente a la fachada (amarillo del plano). Las sillas se pueden usar con E. ── */
 {const wood=S(0xe9ebed,.6),leg=S(0x6b7078,.5,{metalness:.6}),yel=S(0xe8b400,.55),TZ=-33.6;
@@ -854,7 +856,7 @@ boxM(contMat,58,70,0,2.6,-22,-16.2);boxM(contMat,58.4,70.4,2.6,5.2,-21.6,-16.6);
 
 /* ── MACETAS + BANCAS ────────────────────────────────────── */
 function plant(x,z,s=1){const p=new THREE.Mesh(new THREE.CylinderGeometry(.3*s,.22*s,.5*s,10),S(0x7c4f30,.9));p.position.set(x,.25*s,z);p.castShadow=true;scene.add(p);const q=new THREE.Mesh(new THREE.IcosahedronGeometry(.5*s,1),S(0x356f3c,1));q.position.set(x,.95*s,z);q.castShadow=true;scene.add(q)}
-[[16,7.8],[12,7.8],[29,-7.8],[33,-7.8],[-2.8,4],[-2.8,6],[69.6,-4],[69.6,-6],[44,-7.8],[71.5,-1.6]].forEach(a=>plant(a[0],a[1],1.1));
+[[16,7.8],[12,7.8],[29,-7.8],[33,-7.8],[69.6,-4],[69.6,-6],[44,-7.8],[71.5,-1.6]].forEach(a=>plant(a[0],a[1],1.1));
 /* ── ESTACIONAMIENTO NORTE + ÁREAS VERDES (explanada entre el ingreso, la Panamericana, Mecánica y el Centro de Formación) ── */
 {const X0=16,SW=2.6,NS=40,X1=X0+NS*SW;
  asphalt(9,125,-150.5,-103,24);

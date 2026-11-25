@@ -3,7 +3,7 @@
    1. Calle entre la Escuela de Artes Gráficas y el pabellón (+ calzada de ingreso prolongada hasta la pista sur)
    2. Muro a lo largo de la pista sur, de extremo a extremo
    3. Auditorio más pequeño: su mitad oeste pasa a ser una plaza con la puerta de ingreso
-   3b. Estadio y loza elevados 1.20 m: muro de piedra negra, escaleras con borde amarillo, barandas inox y reja negra alta
+   3b. (ver bloque 5) Todo el nivel elevado 1.20 m: paseo, estadio, loza, comedor y plaza del auditorio
    4. Comedor habilitado: se entra por la puerta, con barra, cocina, mesas y carta
    5. Pedidos del comedor (al final de este archivo): E junto a la barra = carta → pagar → recoger en ENTREGA, y puerta corrediza
    Cada bloque está aislado en try/catch: si uno falla, el resto del campus queda como antes.
@@ -27,6 +27,7 @@ const ib=(m,x0,x1,y0,y1,z0,z1)=>{let a=IB.get(m);if(!a)IB.set(m,a=[]);a.push([(x
 const volcar=()=>{const q=new THREE.Quaternion(),M=new THREE.Matrix4(),p=new THREE.Vector3(),s=new THREE.Vector3();
   IB.forEach((a,m)=>{const im=new THREE.InstancedMesh(unit,m,a.length);a.forEach((b,i)=>{p.set(b[0],b[1],b[2]);s.set(b[3],b[4],b[5]);M.compose(p,q,s);im.setMatrixAt(i,M)});
     im.castShadow=!m.isMeshBasicMaterial;im.receiveShadow=true;im.frustumCulled=false;scene.add(im)});IB.clear()};
+const EL=1.2;                                     /* altura del nivel elevado (estadio, loza, paseo, comedor, auditorio) */
 const campus=[];                                   /* personas nuevas (mundo): [x,z,tipo,giro,sentado] */
 
 /* ───────── 1 · CALLE ENTRE ARTES GRÁFICAS Y PABELLÓN ───────── */
@@ -59,18 +60,28 @@ ok('Calle Artes Gráficas / pabellón',()=>{
 
 /* ───────── 2 · MURO A LO LARGO DE LA PISTA SUR ───────── */
 ok('Muro pista sur',()=>{
-  const X0=-175,X1=175,ZC=66.6,TH=.5,HM=2.8;                                          /* misma longitud que la pista (x −175…175) */
-  const t=tex(512,256,(c,w,h)=>{c.fillStyle='#e3e6e9';c.fillRect(0,0,w,h);noise(c,w,h,1200,.07,120,225);
+  const X0=-175,X1=175,ZC=66.6,TH=.5,HM=2.8,DX=76,GW=1.9,HP=2.4;                      /* puerta peatonal frente a la Torre B (x 76) */
+  const t0=tex(512,256,(c,w,h)=>{c.fillStyle='#e3e6e9';c.fillRect(0,0,w,h);noise(c,w,h,1200,.07,120,225);
     c.fillStyle='#8f969e';c.fillRect(0,h*.88,w,h*.12);c.fillStyle='rgba(40,48,60,.22)';c.fillRect(0,0,4,h);
     c.fillStyle='#1646a0';c.fillRect(0,h*.06,w,h*.07);logo(c,w/2,h*.52,40,'#1646a0')});
-  t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set((X1-X0)/5,1);
-  const m=new THREE.Mesh(new THREE.BoxGeometry(X1-X0,HM,TH),new THREE.MeshStandardMaterial({map:t,roughness:.86,metalness:.02,envMapIntensity:.25}));
-  m.position.set(0,HM/2,ZC);m.castShadow=m.receiveShadow=true;scene.add(m);
-  box(0xc9ced4,X0-.15,X1+.15,HM,HM+.12,ZC-.35,ZC+.35);
+  const tramo=(a,b)=>{const t=t0.clone();t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set((b-a)/5,1);t.needsUpdate=true;
+    const m=new THREE.Mesh(new THREE.BoxGeometry(b-a,HM,TH),new THREE.MeshStandardMaterial({map:t,roughness:.86,metalness:.02,envMapIntensity:.25}));
+    m.position.set((a+b)/2,HM/2,ZC);m.castShadow=m.receiveShadow=true;scene.add(m);box(0xc9ced4,a-.15,b+.15,HM,HM+.12,ZC-.35,ZC+.35);obst(a,b,ZC-TH/2,ZC+TH/2)};
+  tramo(X0,DX-GW/2);tramo(DX+GW/2,X1);
   const n=(X1-X0)/10+1,im=new THREE.InstancedMesh(new THREE.BoxGeometry(.7,HM+.25,.8),S(0xcfd3d8,.8),n),M=new THREE.Matrix4();
   for(let i=0;i<n;i++){M.makeTranslation(X0+i*10,(HM+.25)/2,ZC);im.setMatrixAt(i,M)}
   im.castShadow=im.receiveShadow=true;im.frustumCulled=false;scene.add(im);
-  obst(X0,X1,ZC-TH/2,ZC+TH/2);
+  /* puerta: marco azul, dintel sobre el vano y una hoja abierta (como la puerta de una casa) */
+  boxM(portalBlue,DX-GW/2-.18,DX-GW/2,0,HP+.3,ZC-.32,ZC+.32);boxM(portalBlue,DX+GW/2,DX+GW/2+.18,0,HP+.3,ZC-.32,ZC+.32);
+  boxM(portalBlue,DX-GW/2-.18,DX+GW/2+.18,HP,HP+.3,ZC-.32,ZC+.32);boxM(S(0xe3e6e9,.86),DX-GW/2-.18,DX+GW/2+.18,HP+.3,HM,ZC-TH/2,ZC+TH/2);
+  box(0xc9ced4,DX-GW/2-.33,DX+GW/2+.33,HM,HM+.12,ZC-.35,ZC+.35);
+  {const hoja=new THREE.Group(),w=GW-.06;
+   const hm=S(0x10151d,.18,{metalness:.6,envMapIntensity:1.1});
+   const pn=new THREE.Mesh(new THREE.BoxGeometry(w,HP-.1,.06),hm);pn.position.set(w/2,(HP-.1)/2+.05,0);pn.castShadow=true;hoja.add(pn);
+   for(const [x,y,ww,hh] of[[w/2,.08,w,.1],[w/2,HP-.05,w,.1],[.04,(HP-.1)/2+.05,.08,HP-.1],[w-.04,(HP-.1)/2+.05,.08,HP-.1]]){const b=new THREE.Mesh(new THREE.BoxGeometry(ww,hh,.1),portalBlue);b.position.set(x,y,0);hoja.add(b)}
+   const mn=new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,.16,8),S(0xd3d8dc,.25,{metalness:.9}));mn.position.set(w-.18,1.05,.08);mn.rotation.z=Math.PI/2;hoja.add(mn);
+   hoja.position.set(DX-GW/2+.02,0,ZC-TH/2-.05);hoja.rotation.y=Math.PI*.62;scene.add(hoja)}                       /* hoja entreabierta hacia el campus */
+  box(0xd6d9db,DX-1.4,DX+1.4,0,.07,ZC-.4,75);                                                           /* senda hasta la Torre B */
 });
 
 /* ───────── 3 · AUDITORIO MÁS PEQUEÑO + PLAZA CON LA PUERTA ───────── */
@@ -119,64 +130,6 @@ ok('Auditorio y plaza',()=>{
   bench(-108,-72.4);bench(-96,-72.4);bench(-84,-72.4);lampPost(-72,-106,0);lampPost(-114,-76,0);
 });
 
-/* ───────── 3b · ESTADIO Y LOZA ELEVADOS (≈1.20 m, como en las fotos) ─────────
-   Muro de piedra negra rugosa con remate claro, escaleras de 6 peldaños con borde amarillo y barandas de acero inoxidable
-   en cada portón, y reja negra alta con marcos (sobre la plataforma). Se sube solo por las escaleras. */
-ok('Estadio elevado',()=>{
-  const R=window.RAISED&&window.RAISED[0],CA=window.__cancha;
-  if(!R||!CA||!window.__fences)throw new Error('falta la plataforma del estadio');
-  const H=R.h,N=6,RISE=H/N,RUN=.32,W=4,ZB=R.z0-.12;                      /* ZB = cara exterior del remate claro */
-  const gates=[CA.x,((CA.x+CA.hl+2.5)+R.x1)/2];                          /* centro de cada portón: cancha y loza */
-  const stoneT=tex(256,256,(c,w,h)=>{c.fillStyle='#23262a';c.fillRect(0,0,w,h);noise(c,w,h,2600,.55,8,70);noise(c,w,h,900,.35,70,120);
-    c.strokeStyle='rgba(0,0,0,.55)';c.lineWidth=3;for(let y=0;y<h;y+=64){c.beginPath();c.moveTo(0,y);c.lineTo(w,y);c.stroke();for(let x=((y/64)%2)*64;x<w;x+=128){c.beginPath();c.moveTo(x,y);c.lineTo(x,y+64);c.stroke()}}});
-  stoneT.wrapS=stoneT.wrapT=THREE.RepeatWrapping;
-  const stone=(len,hh)=>{const t=stoneT.clone();t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(len/1.4,hh/1.4);t.needsUpdate=true;return new THREE.MeshStandardMaterial({map:t,roughness:.95,metalness:.05,envMapIntensity:.2})};
-  const solido=(x0,x1,y0,y1,z0,z1,m)=>{const q=boxM(m,x0,x1,y0,y1,z0,z1);return q};
-  /* muro de contención (sobre él queda el sardinel claro de 04-entorno.js) */
-  const WH=H-.1,e=.12;
-  solido(R.x0-e,R.x1+e,0,WH,R.z0-e,R.z0,stone(R.x1-R.x0,WH));solido(R.x0-e,R.x1+e,0,WH,R.z1,R.z1+e,stone(R.x1-R.x0,WH));
-  solido(R.x0-e,R.x0,0,WH,R.z0,R.z1,stone(R.z1-R.z0,WH));solido(R.x1,R.x1+e,0,WH,R.z0,R.z1,stone(R.z1-R.z0,WH));
-
-  /* escaleras */
-  const yel=S(0xf2b800,.5),tread=S(0xb9bdc0,.9),inox=S(0xd3d8dc,.22,{metalness:.9,envMapIntensity:1.2});
-  gates.forEach(gx=>{
-    for(let i=0;i<N;i++){const top=(i+1)*RISE,zf=ZB-(N-i)*RUN,zr=ZB-(N-i-1)*RUN;
-      solido(gx-W/2,gx+W/2,0,top,zf,zr,tread);
-      solido(gx-W/2,gx+W/2,top,top+.012,zf,zf+.09,yel);                                 /* borde amarillo del peldaño */
-      for(const s of[-1,1]){const xa=gx+s*W/2,xb=xa+s*.35;solido(Math.min(xa,xb),Math.max(xa,xb),0,top+.1,zf,zr,stone(RUN,top))}}   /* mejillas de piedra */
-    const zA=ZB-N*RUN,zE=ZB+.12;
-    window.RAISED.push({x0:gx-W/2,x1:gx+W/2,z0:zA,z1:R.z0,h:H,up:ZB});                  /* la navegación sube por la escalera */
-    for(const s of[-1,1])obst(Math.min(gx+s*W/2,gx+s*(W/2+.35)),Math.max(gx+s*W/2,gx+s*(W/2+.35)),zA,ZB);
-    /* barandas de acero inoxidable: pasamanos inclinado + intermedio + postes */
-    for(const s of[-1,1]){const x=gx+s*(W/2+.175);
-      for(const hh of[.95,.5]){const y0=hh+RISE*.5,y1=hh+H,dz=ZB-zA,dy=y1-y0,len=Math.hypot(dz,dy);
-        const r=new THREE.Mesh(new THREE.CylinderGeometry(hh>.9?.035:.022,hh>.9?.035:.022,len,8),inox);r.position.set(x,(y0+y1)/2+.1,(zA+ZB)/2);r.rotation.x=Math.atan2(dz,dy);r.castShadow=true;scene.add(r)}
-      for(let i=0;i<N;i+=2){const top=(i+1)*RISE+.1,zc=ZB-(N-i-.5)*RUN,yr=.95+RISE*.5+.1+H*((zc-zA)/(ZB-zA));cylM(inox,.03,.03,yr-top,x,(top+yr)/2,zc,8)}
-      const zt=ZB-.12;cylM(inox,.03,.03,.95+.1,x,H+.1+.475,zt,8);                         /* poste de remate arriba */
-    }
-  });
-
-  /* reja alta negra con marcos (FH sobre la plataforma) */
-  const FH=6,hh=FH-.2,negro=S(0x111316,.5,{metalness:.55,envMapIntensity:.8});
-  const mt=tex(128,128,(c,w,h)=>{c.clearRect(0,0,w,h);c.strokeStyle='#15181b';c.lineWidth=4;for(let i=-h;i<=w+h;i+=24){c.beginPath();c.moveTo(i,0);c.lineTo(i+h,h);c.stroke();c.beginPath();c.moveTo(i,h);c.lineTo(i+h,0);c.stroke()}});
-  mt.wrapS=mt.wrapT=THREE.RepeatWrapping;
-  const malla=new THREE.MeshStandardMaterial({map:mt,alphaTest:.4,side:THREE.DoubleSide,roughness:.55,metalness:.5,envMapIntensity:.6});
-  const posts=[],thin=[];
-  window.__fences.forEach(([x0,z0,x1,z1])=>{
-    const L=Math.hypot(x1-x0,z1-z0);if(L<.5)return;
-    const ang=Math.atan2(-(z1-z0),x1-x0),cx=(x0+x1)/2,cz=(z0+z1)/2,ux=(x1-x0)/L,uz=(z1-z0)/L;
-    const g=new THREE.PlaneGeometry(L,hh);{const uv=g.attributes.uv;for(let i=0;i<uv.count;i++){uv.setX(i,uv.getX(i)*L/1.0);uv.setY(i,uv.getY(i)*hh/1.0)}}
-    const m=new THREE.Mesh(g,malla);m.position.set(cx,H+.2+hh/2,cz);m.rotation.y=ang;scene.add(m);
-    for(const [y,t,d] of[[.12,.3,.16],[2.9,.12,.16],[3.05,.12,.16],[4.4,.1,.14],[FH-.06,.16,.2]]){const b=new THREE.Mesh(new THREE.BoxGeometry(L,t,d),negro);b.position.set(cx,H+y,cz);b.rotation.y=ang;b.castShadow=true;scene.add(b)}
-    const n=Math.max(1,Math.round(L/4));
-    for(let i=0;i<=n;i++){posts.push([x0+ux*L*i/n,z0+uz*L*i/n]);if(i<n)thin.push([x0+ux*L*(i+.5)/n,z0+uz*L*(i+.5)/n])}
-    obst(Math.min(x0,x1)-.4,Math.max(x0,x1)+.4,Math.min(z0,z1)-.4,Math.max(z0,z1)+.4);
-  });
-  {const d=new THREE.Object3D();
-   const a=new THREE.InstancedMesh(new THREE.BoxGeometry(.24,FH,.24),negro,posts.length);posts.forEach(([x,z],i)=>{d.position.set(x,H+FH/2,z);d.updateMatrix();a.setMatrixAt(i,d.matrix)});a.castShadow=true;a.frustumCulled=false;scene.add(a);
-   const b=new THREE.InstancedMesh(new THREE.BoxGeometry(.1,FH-3.1,.1),negro,thin.length);thin.forEach(([x,z],i)=>{d.position.set(x,H+3.05+(FH-3.1)/2,z);d.updateMatrix();b.setMatrixAt(i,d.matrix)});b.frustumCulled=false;scene.add(b)}
-});
-
 /* ───────── 4 · COMEDOR HABILITADO ───────── */
 window.COMEDOR_CARTA=[
  {nombre:'Almuerzos',items:[{id:'menu',nombre:'Menú del día',desc:'Sopa + segundo + refresco',precio:10},{id:'lomo',nombre:'Lomo saltado',desc:'Con arroz y papas fritas',precio:15},{id:'arroz',nombre:'Arroz con pollo',desc:'Con ensalada criolla',precio:12},{id:'aji',nombre:'Ají de gallina',desc:'Con arroz y papa',precio:13},{id:'tallarin',nombre:'Tallarín saltado',desc:'De pollo o de carne',precio:13},{id:'broaster',nombre:'Pollo broaster',desc:'1/4 con papas y ensalada',precio:12}]},
@@ -198,6 +151,7 @@ ok('Comedor',()=>{
   window.__comedorGlassMat=vidrio;
   const P=(w,h,x,y,z,ry=0,m=vidrio)=>{const q=new THREE.Mesh(new THREE.PlaneGeometry(w,h),m);q.position.set(x,y,z);q.rotation.y=ry;scene.add(q);return q};
 
+  const zComedor=scene.children.length;                                             /* todo lo que se crea desde aquí sube a 1.20 m al final */
   /* muros: norte y oeste macizos; sur y este con zócalo, vidrio y dintel */
   boxM(blanco,X0,X1,0,HT,Z0,Z0+T);boxM(blanco,X0,X0+T,0,HT,Z0,Z1);
   for(const [a,b] of[[X0,dl],[dr,X1]]){boxM(blanco,a,b,0,.9,Z1-T,Z1);boxM(blanco,a,b,5.3,HT,Z1-T,Z1);P(b-a,4.4,(a+b)/2,3.1,Z1-T/2);
@@ -255,7 +209,7 @@ ok('Comedor',()=>{
 
   /* sala: 18 mesas con 72 sillas (se pueden usar con E) */
   const silla=(x,z,c)=>{ib(amarillo,x-.23,x+.23,.43,.48,z-.23,z+.23);ib(amarillo,x-.23,x+.23,.48,.95,z-c*.23-.025,z-c*.23+.025);ib(pata,x-.21,x-.19,0,.43,z-.2,z+.2);ib(pata,x+.19,x+.21,0,.43,z-.2,z+.2);
-    ASIENTOS.push({x,z,y:.45,yaw:c>0?Math.PI:0,kind:'silla del comedor'})};
+    ASIENTOS.push({x,z,y:.45+EL,yaw:c>0?Math.PI:0,kind:'silla del comedor'})};
   for(const tz of[-49.5,-44.5,-39.5])for(const tx of[-101,-107,-113,-91,-85,-79]){
     ib(mesa,tx-.95,tx+.95,.72,.78,tz-.45,tz+.45);ib(pata,tx-.84,tx-.78,0,.72,tz-.35,tz+.35);ib(pata,tx+.78,tx+.84,0,.72,tz-.35,tz+.35);ib(pata,tx-.8,tx+.8,.3,.34,tz-.02,tz+.02);
     for(const dx of[-.45,.45]){silla(tx+dx,tz-.7,1);silla(tx+dx,tz+.7,-1)}}
@@ -265,10 +219,11 @@ ok('Comedor',()=>{
   [[-118.4,-38.2],[-73.6,-38.2],[-118.4,-55],[-73.6,-55]].forEach(a=>plant(a[0],a[1],1.3));
   for(const x of[-117.5,-74.5]){ib(blanco,x-.3,x+.3,0,1.1,-38.8,-38.2);cylM(S(0x7fb8e0,.2,{metalness:.3}),.22,.22,.45,x,1.3,-38.5,12)}
   volcar();
+  moveZone(zComedor,0,0).position.y=EL;
   /* colisiones: muros con el hueco de la puerta + barra. Los vehículos no pasan por la puerta (círculos sólidos). */
   obst(X0,X1,Z0,Z0+T);obst(X0,X0+T,Z0,Z1);obst(X1-T,X1,Z0,Z1);obst(X0,dl,Z1-T,Z1);obst(dr,X1,Z1-T,Z1);obst(X0,X1,CB0,CB1);
   solid(dl-.2,Z1-.15,.75);solid(dr+.2,Z1-.15,.75);
-  window.__comedor={x0:IX0+1.2,x1:IX1-1.2,zf:CB1+.2,xo:XO,xp:XP,zp:(CB0+CB1)/2,yMesa:TY};
+  window.__comedor={x0:IX0+1.2,x1:IX1-1.2,zf:CB1+.2,xo:XO,xp:XP,zp:(CB0+CB1)/2,yMesa:TY+EL};
   /* personal y comensales */
   campus.push([XO,-59.3,'persona',0,false],[XP,-59.3,'persona',0,false],[-113,-60.2,'profesor',Math.PI,false],[-85,-60.2,'profesor',Math.PI,false],
     [-98,-54.6,'alumno',Math.PI,false],[-94.6,-53.2,'persona',Math.PI,false],
@@ -276,6 +231,146 @@ ok('Comedor',()=>{
     [-85.45,-45.2,'persona',0,true],[-84.55,-43.8,'alumno',Math.PI,true],[-91.45,-40.2,'alumno',0,true],[-78.55,-48.8,'alumno',Math.PI,true],[-107.45,-40.2,'persona',0,true]);
   /* las mesas de afuera frente a la puerta ya no estorban: se retiraron arriba */
 });
+/* ───────── 5 · NIVEL ELEVADO (1.20 m): paseo, estadio, loza, comedor y plaza del auditorio ─────────
+   Según las fotos: el estadio, la loza, el comedor y el auditorio están a ~1.20 m sobre la vereda y se sube por escaleras
+   (muro de piedra negra, peldaños con borde amarillo y barandas de acero inoxidable) hasta un paseo que llega al fondo. */
+const N_ESC=6,RISE=EL/N_ESC,RUN=.32;
+const stoneT=tex(256,256,(c,w,h)=>{c.fillStyle='#23262a';c.fillRect(0,0,w,h);noise(c,w,h,2600,.55,8,70);noise(c,w,h,900,.35,70,120);
+  c.strokeStyle='rgba(0,0,0,.55)';c.lineWidth=3;for(let y=0;y<h;y+=64){c.beginPath();c.moveTo(0,y);c.lineTo(w,y);c.stroke();for(let x=((y/64)%2)*64;x<w;x+=128){c.beginPath();c.moveTo(x,y);c.lineTo(x,y+64);c.stroke()}}});
+stoneT.wrapS=stoneT.wrapT=THREE.RepeatWrapping;
+const stone=(len,hh)=>{const t=stoneT.clone();t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(Math.max(.5,len/1.4),Math.max(.3,hh/1.4));t.needsUpdate=true;return new THREE.MeshStandardMaterial({map:t,roughness:.95,metalness:.05,envMapIntensity:.2})};
+const inox=S(0xd3d8dc,.22,{metalness:.9,envMapIntensity:1.2}),yelM=S(0xf2b800,.5),treadM=S(0xb9bdc0,.9);
+const tileT=tex(128,128,(c,w,h)=>{c.fillStyle='#d6d9db';c.fillRect(0,0,w,h);noise(c,w,h,500,.05,170,225);c.strokeStyle='#aeb3b7';c.lineWidth=3;c.strokeRect(1.5,1.5,w-3,h-3)});
+const tileMat=(w,d)=>{const t=tileT.clone();t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(w/2.4,d/2.4);t.needsUpdate=true;return new THREE.MeshStandardMaterial({map:t,roughness:.9,metalness:.02,envMapIntensity:.2})};
+const cl=(v,a,b)=>Math.max(a,Math.min(b,v));
+/* sube todo lo que está sobre el suelo dentro de un rectángulo (cajas completas dentro del área) */
+const elevar=(x0,x1,z0,z1)=>{const bb=new THREE.Box3();let n=0;
+  scene.children.slice().forEach(o=>{if(o.isInstancedMesh||o.isLight||!(o.isMesh||o.isGroup))return;bb.setFromObject(o);if(!isFinite(bb.min.x))return;
+    if(bb.min.x>=x0&&bb.max.x<=x1&&bb.min.z>=z0&&bb.max.z<=z1&&bb.min.y<1.0){o.position.y+=EL;n++}});return n};
+/* barra de acero inoxidable (horizontal) */
+const barraX=(x0,x1,y,z,r=.03)=>{const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,Math.abs(x1-x0),8),inox);m.rotation.z=Math.PI/2;m.position.set((x0+x1)/2,y,z);m.castShadow=true;scene.add(m)};
+const barraZ=(z0,z1,y,x,r=.03)=>{const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,Math.abs(z1-z0),8),inox);m.rotation.x=Math.PI/2;m.position.set(x,y,(z0+z1)/2);m.castShadow=true;scene.add(m)};
+/* escalera de N_ESC peldaños. eje 'x': avanza en X desde xb (borde del nivel alto) hacia dir; centrada en z=c. eje 'z': análogo. */
+const escalera=(eje,base,dir,c,ancho)=>{
+  const d=k=>base+dir*k*RUN,put=(a,b,y0,y1,c0,c1,m)=>{const lo=Math.min(a,b),hi=Math.max(a,b);return eje==='x'?boxM(m,lo,hi,y0,y1,c0,c1):boxM(m,c0,c1,y0,y1,lo,hi)};
+  for(let i=0;i<N_ESC;i++){const top=(i+1)*RISE,a=d(N_ESC-i-1),b=d(N_ESC-i);
+    put(a,b,0,top,c-ancho/2,c+ancho/2,treadM);put(b-dir*.09,b,top,top+.012,c-ancho/2,c+ancho/2,yelM);                      /* borde amarillo */
+    for(const s of[-1,1]){const c0=c+s*ancho/2,c1=c0+s*.35;put(a,b,0,top+.1,Math.min(c0,c1),Math.max(c0,c1),stone(RUN,top))}}      /* mejillas de piedra */
+  const aOut=d(N_ESC),lo=Math.min(aOut,base),hi=Math.max(aOut,base);
+  for(const s of[-1,1]){const c0=c+s*ancho/2,c1=c0+s*.35,cc=c0+s*.175;
+    if(eje==='x')obst(lo,hi,Math.min(c0,c1),Math.max(c0,c1));else obst(Math.min(c0,c1),Math.max(c0,c1),lo,hi);
+    for(const [h,r] of[[.95,.035],[.5,.022]]){const y0=h+RISE*.5+.1,y1=h+EL+.1,L=Math.hypot(base-aOut,y1-y0);
+      const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,L,8),inox);m.castShadow=true;
+      if(eje==='x'){m.position.set((aOut+base)/2,(y0+y1)/2,cc);m.rotation.z=Math.atan2(-(base-aOut),y1-y0)}else{m.position.set(cc,(y0+y1)/2,(aOut+base)/2);m.rotation.x=Math.atan2(base-aOut,y1-y0)}
+      scene.add(m)}
+    for(let i=0;i<N_ESC;i+=2){const pos=d(N_ESC-i-.5),top=(i+1)*RISE+.1,yr=.95+RISE*.5+.1+(EL-RISE*.5)*((pos-aOut)/(base-aOut));
+      if(eje==='x')cylM(inox,.03,.03,yr-top,pos,(top+yr)/2,cc,8);else cylM(inox,.03,.03,yr-top,cc,(top+yr)/2,pos,8)}
+    const pt=base-dir*.1;if(eje==='x')cylM(inox,.03,.03,1.05,pt,EL+.1+.525,cc,8);else cylM(inox,.03,.03,1.05,cc,EL+.1+.525,pt,8)}
+  window.RAISED.push(eje==='x'?{x0:lo,x1:hi,z0:c-ancho/2,z1:c+ancho/2,h:EL,ax:aOut,bx:base}:{x0:c-ancho/2,x1:c+ancho/2,z0:lo,z1:hi,h:EL,az:aOut,bz:base})};
+/* muro de piedra fino (cara exterior) */
+const muroP=(x0,x1,z0,z1)=>{const len=Math.max(x1-x0,z1-z0);boxM(stone(len,EL),x0,x1,0,EL-.02,z0,z1)};
+
+/* 5a · limpieza: plantas sobre la calzada/pista y el arbusto sobre la vereda del parque */
+ok('Limpieza de plantas',()=>{
+  const verdes=new Set([0x356f3c,0x7c4f30,0x87a93a,0x6f9130,0x2b5c30,0x35683a,0x244c29,0x3c6e35,0x2c4a26,0x2e5c33,0x5d4028,0x3a6b3a]);
+  const esPlanta=o=>{let r=false;o.traverse(q=>{if(q.isMesh&&q.material&&q.material.color&&verdes.has(q.material.color.getHex()))r=true});return r};
+  const calles=[[-9.6,9.6,7,61],[-123.6,-8,30.8,37.6],[-131,-123.4,-165,66]];     /* calzada de ingreso, calle E-O y pista oeste */
+  let n=0;
+  scene.children.slice().forEach(o=>{if(!(o.isMesh||o.isGroup)||o.isInstancedMesh)return;const p=o.position;if(p.y>1.5)return;
+    if(calles.some(r=>p.x>r[0]&&p.x<r[1]&&p.z>r[2]&&p.z<r[3])&&esPlanta(o)){quitar(o);n++;for(let i=SOL.length-1;i>=0;i--)if(Math.hypot(SOL[i][0]-p.x,SOL[i][1]-p.z)<.8)SOL.splice(i,1)}});
+  const b=scene.children.find(o=>o.isGroup&&near(o.position.x,-39,.05)&&near(o.position.z,-34.5,.05));if(b)quitar(b);   /* arbusto verde-amarillo sobre la vereda del parque */
+  console.info('[04c-ajustes] plantas retiradas de las pistas:',n);
+});
+
+/* 5b · paseo elevado entre el comedor y el estadio + estadio/loza/comedor a 1.20 m */
+ok('Paseo y estadio elevados',()=>{
+  const R0=window.RAISED&&window.RAISED[0],CA=window.__cancha;if(!R0||!CA)throw new Error('falta la plataforma del estadio');
+  const DX0=-120,DX1=R0.x1,DZ0=-36,DZ1=R0.z0;                                       /* paseo: del comedor (x −120) al borde este del estadio, z −36…−30.4 */
+  tocar([114,.07,5.1,-66,.035,-33.45],quitar);                                        /* vereda baja de esa franja */
+  tocar([R0.x1-R0.x0+.24,.1,.22,(R0.x0+R0.x1)/2,EL-.05,DZ1-.01],quitar);                      /* sardinel norte del estadio (queda dentro del paseo) */
+  const mover=elevar(DX0-1.6,DX1+1.6,DZ0-.4,DZ1-.05);                                /* mesas, sillas, faroles y bancas del paseo suben con él */
+  for(const a of ASIENTOS)if(a.x>DX0-1.6&&a.x<DX1+1.6&&a.z>DZ0-.4&&a.z<DZ1&&a.y<1)a.y+=EL;
+  /* vereda baja que se retiró: queda solo al este del paseo */
+  {const t=tileMat(18.4,5.1);const q=new THREE.Mesh(new THREE.BoxGeometry(-9-(DX1+.1),.07,5.1),t);q.position.set((DX1+.1-9)/2,.035,-33.45);q.receiveShadow=true;scene.add(q)}
+  /* losa del paseo: piedra negra en los costados, loseta clara arriba */
+  const L=DX1-DX0,Wd=DZ1-DZ0,sm=stone(L,EL),em=stone(Wd,EL);
+  const slab=new THREE.Mesh(new THREE.BoxGeometry(L,EL,Wd),[em,em,tileMat(L,Wd),em,sm,sm]);slab.position.set((DX0+DX1)/2,EL/2,(DZ0+DZ1)/2);slab.receiveShadow=slab.castShadow=true;scene.add(slab);
+  window.RAISED.push({x0:DX0,x1:DX1,z0:DZ0-.4,z1:DZ1+.05,h:EL,ramp:.02});
+  /* escaleras del paseo: oeste (desde la vereda de la pista), este y norte (hacia el parque) */
+  const zc=(DZ0+DZ1)/2;escalera('x',DX0,-1,zc,4);escalera('x',DX1,1,zc,4);escalera('z',DZ0,-1,-34,4);
+  /* baranda inox del lado del parque (con hueco en la escalera norte) */
+  const nz=DZ0+.12;
+  for(const [a,b] of[[-72,-36.4],[-31.6,DX1-.1]]){for(let x=a;x<=b+.01;x+=2)cylM(inox,.03,.03,1.0,x,EL+.5,nz,8);for(const y of[1.05,.78,.5])barraX(a,b,EL+y,nz,y>1?.035:.022);obst(a,b,DZ0-.35,DZ0+.05)}
+  /* estadio y loza: muro de piedra por el oeste, este y sur (el lado norte es el paseo) */
+  const e=.12;muroP(R0.x0-e,R0.x0,R0.z0,R0.z1);muroP(R0.x1,R0.x1+e,R0.z0,R0.z1);muroP(R0.x0-e,R0.x1+e,R0.z1,R0.z1+e);
+  /* reja negra alta con marcos (sobre la plataforma) */
+  const FH=6,hh=FH-.2,negro=S(0x111316,.5,{metalness:.55,envMapIntensity:.8});
+  const mt=tex(128,128,(c,w,h)=>{c.clearRect(0,0,w,h);c.strokeStyle='#15181b';c.lineWidth=4;for(let i=-h;i<=w+h;i+=24){c.beginPath();c.moveTo(i,0);c.lineTo(i+h,h);c.stroke();c.beginPath();c.moveTo(i,h);c.lineTo(i+h,0);c.stroke()}});
+  mt.wrapS=mt.wrapT=THREE.RepeatWrapping;
+  const malla=new THREE.MeshStandardMaterial({map:mt,alphaTest:.4,side:THREE.DoubleSide,roughness:.55,metalness:.5,envMapIntensity:.6});
+  const posts=[],thin=[];
+  (window.__fences||[]).forEach(([x0,z0,x1,z1])=>{
+    const Ls=Math.hypot(x1-x0,z1-z0);if(Ls<.5)return;
+    const ang=Math.atan2(-(z1-z0),x1-x0),cx=(x0+x1)/2,cz=(z0+z1)/2,ux=(x1-x0)/Ls,uz=(z1-z0)/Ls;
+    const g=new THREE.PlaneGeometry(Ls,hh);{const uv=g.attributes.uv;for(let i=0;i<uv.count;i++){uv.setX(i,uv.getX(i)*Ls);uv.setY(i,uv.getY(i)*hh)}}
+    const m=new THREE.Mesh(g,malla);m.position.set(cx,EL+.2+hh/2,cz);m.rotation.y=ang;scene.add(m);
+    for(const [y,t,d] of[[.12,.3,.16],[2.9,.12,.16],[3.05,.12,.16],[4.4,.1,.14],[FH-.06,.16,.2]]){const b=new THREE.Mesh(new THREE.BoxGeometry(Ls,t,d),negro);b.position.set(cx,EL+y,cz);b.rotation.y=ang;b.castShadow=true;scene.add(b)}
+    const n=Math.max(1,Math.round(Ls/4));
+    for(let i=0;i<=n;i++){posts.push([x0+ux*Ls*i/n,z0+uz*Ls*i/n]);if(i<n)thin.push([x0+ux*Ls*(i+.5)/n,z0+uz*Ls*(i+.5)/n])}
+    obst(Math.min(x0,x1)-.4,Math.max(x0,x1)+.4,Math.min(z0,z1)-.4,Math.max(z0,z1)+.4);
+  });
+  {const d=new THREE.Object3D();
+   const a=new THREE.InstancedMesh(new THREE.BoxGeometry(.24,FH,.24),negro,posts.length);posts.forEach(([x,z],i)=>{d.position.set(x,EL+FH/2,z);d.updateMatrix();a.setMatrixAt(i,d.matrix)});a.castShadow=true;a.frustumCulled=false;scene.add(a);
+   const b=new THREE.InstancedMesh(new THREE.BoxGeometry(.1,FH-3.1,.1),negro,thin.length);thin.forEach(([x,z],i)=>{d.position.set(x,EL+3.05+(FH-3.1)/2,z);d.updateMatrix();b.setMatrixAt(i,d.matrix)});b.frustumCulled=false;scene.add(b)}
+  /* comedor a 1.20 m: zócalo de piedra, y el interior se pisa sobre ese nivel */
+  {const X0=-120,X1=-72,Z0=-62,Z1=-36,e2=.12;
+   muroP(X0-e2,X0,Z0-e2,Z1);muroP(X1,X1+e2,Z0-e2,Z1);muroP(X0,X1,Z0-e2,Z0);
+   window.RAISED.push({x0:X0+.3,x1:X1-.3,z0:Z0+.3,z1:Z1+.4,h:EL,ramp:.02})}
+  console.info('[04c-ajustes] objetos subidos al paseo:',mover);
+});
+
+/* 5c · plaza del auditorio a 1.20 m (la misma altura del comedor), con escalera hacia el sur */
+ok('Plaza y auditorio elevados',()=>{
+  const X0=-118.3,X1=-21.5,Z0=-111.8,Z1=-68.9;
+  const n=elevar(X0,X1,Z0,Z1);console.info('[04c-ajustes] objetos de la plaza/auditorio subidos:',n);
+  const e=.12,xs=-86,hw=3;
+  muroP(X0-e,X0,Z0-e,Z1+e);muroP(X1,X1+e,Z0-e,Z1+e);muroP(X0,X1,Z0-e,Z0);
+  muroP(X0,xs-hw-.35,Z1,Z1+e);muroP(xs+hw+.35,X1,Z1,Z1+e);
+  escalera('z',Z1,1,xs,2*hw);
+  obst(X0-e-.1,X0,Z0-e,Z1+e);obst(X1,X1+e+.1,Z0-e,Z1+e);obst(X0,X1,Z0-e-.1,Z0);obst(X0,xs-hw-.35,Z1,Z1+e+.1);obst(xs+hw+.35,X1,Z1,Z1+e+.1);
+  window.RAISED.push({x0:X0,x1:X1,z0:Z0,z1:Z1,h:EL,ramp:.02});
+});
+
+/* 5d · parque: troncos pintados de blanco, caseta azul «CTA SENATI», senda de concreto y cordones */
+ok('Parque: caseta CTA',()=>{
+  const blanco=S(0xf4f3ee,.85);
+  scene.children.slice().forEach(o=>{if(!o.isGroup||o.position.x<-62||o.position.x>-12||o.position.z<-66||o.position.z>-33)return;
+    const t=o.children[0];if(!t||!t.geometry||t.geometry.type!=='CylinderGeometry')return;const gp=t.geometry.parameters;
+    if(t.material&&t.material.color&&t.material.color.getHex()===0xf2f0ea)return;
+    const palma=o.children.length<=3&&o.children.some(c=>c.isGroup&&c.children.length>=8),magnolia=o.children.length===6&&gp.height>5&&gp.height<6;
+    if(!palma&&!magnolia)return;
+    const h=magnolia?1.5:1.8,r0=gp.radiusBottom,r1=gp.radiusBottom+(gp.radiusTop-gp.radiusBottom)*(h/gp.height);
+    const w=new THREE.Mesh(new THREE.CylinderGeometry(r1*1.04,r0*1.04,h,14),blanco);w.position.y=h/2;w.castShadow=true;o.add(w)});
+  const KX0=-39.5,KX1=-32.5,KZ0=-58.5,KZ1=-53.5;
+  /* senda de concreto desde la escalera norte hasta la caseta + plazoleta */
+  {const t=tileMat(2.4,15);const p=new THREE.Mesh(new THREE.BoxGeometry(2.4,.06,15),t);p.position.set(-34,.03,(-37.95-53.5)/2);p.receiveShadow=true;scene.add(p);
+   const t2=tileMat(10,4);const q=new THREE.Mesh(new THREE.BoxGeometry(10,.06,4),t2);q.position.set(-36,.03,-52);q.receiveShadow=true;scene.add(q)}
+  /* caseta */
+  const azul=S(0x1646a0,.4,{metalness:.5}),crist=new THREE.MeshStandardMaterial({color:0x1b2430,roughness:.12,metalness:.7,envMapIntensity:1.2});
+  boxM(S(0xe9ebed,.8),KX0,KX1,.06,1.1,KZ0,KZ1);boxM(S(0xe9ebed,.8),KX0,KX1,2.7,3.0,KZ0,KZ1);boxM(azul,KX0-.1,KX1+.1,3.0,3.15,KZ0-.2,KZ1+.2);   /* zócalo blanco, dintel y techo azul */
+  boxM(crist,KX0+.05,KX1-.05,1.1,2.7,KZ1-.1,KZ1+.01);boxM(crist,KX1-.1,KX1+.01,1.1,2.7,KZ0,KZ1);boxM(crist,KX0-.01,KX0+.1,1.1,2.7,KZ0,KZ1);boxM(S(0xe9ebed,.8),KX0,KX1,1.1,2.7,KZ0,KZ0+.1);
+  for(let i=0;i<=4;i++){const x=KX0+i*(KX1-KX0)/4;boxM(azul,x-.05,x+.05,1.1,2.7,KZ1-.12,KZ1+.04)}
+  boxM(azul,KX0,KX1,1.1,1.16,KZ1-.12,KZ1+.04);
+  {const m=new THREE.Mesh(new THREE.PlaneGeometry(2.6,.7),new THREE.MeshBasicMaterial({map:tex(512,128,(c,w,h)=>{c.fillStyle='#1646a0';c.fillRect(0,0,w,h);logo(c,64,64,40,'#ffffff');c.fillStyle='#fff';c.font='800 62px "Barlow Condensed",Arial Narrow,Arial';c.textAlign='left';c.textBaseline='middle';c.fillText('CTA_ SENATI',124,66)})}));
+   m.position.set(-34,2.2,KZ1+.05);scene.add(m)}
+  obst(KX0-.1,KX1+.1,KZ0-.1,KZ1+.1);
+  /* cordones blancos con postes alrededor del césped, junto a la senda */
+  {const pm=S(0xf4f3ee,.7),cm=S(0xdadad6,.5);
+   const cord=(x0,z0,x1,z1)=>{const L=Math.hypot(x1-x0,z1-z0);for(const y of[.45,.8]){const b=new THREE.Mesh(new THREE.BoxGeometry(Math.abs(x1-x0)||.015,.015,Math.abs(z1-z0)||.015),cm);b.position.set((x0+x1)/2,y,(z0+z1)/2);scene.add(b)}
+    const n=Math.max(1,Math.round(L/6));for(let i=0;i<=n;i++){const x=x0+(x1-x0)*i/n,z=z0+(z1-z0)*i/n;cylM(pm,.04,.04,1.0,x,.5,z,6)}};
+   cord(-35.6,-39,-35.6,-51);cord(-32.4,-39,-32.4,-51)}
+});
+
 if(campus.length)window.__pabellonCampus=window.__pabellonCampus.concat(campus);
 })();
 

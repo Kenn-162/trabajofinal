@@ -50,7 +50,7 @@ function populate(){clearAll();
  for(const f of[0,1]){for(let k=0;k<6;k++){const p=put(f,types[k%4],0,0,0,false);walkers.push({p,z:(Math.random()-.5)*1.3,a:2+Math.random()*10,b:40+Math.random()*24,x:10+Math.random()*30,v:(.8+Math.random()*.5)*(Math.random()<.5?1:-1),t:Math.random()*6})}
   const c=put(f,'limpieza',0,0,0,false);walkers.push({p:c,z:.5,a:3,b:63,x:20,v:.6,t:0});put(f,'limpieza',50,3.5,Math.PI,false)}
  for(let k=0;k<5;k++)put(0,types[k%4],4+k*13,9.6+Math.random()*1.3,Math.random()*6,false);   /* frente a la fachada sur del pabellón */
- if(window.__pabellonCampus)window.__pabellonCampus.forEach(([x,z,t,ry,st])=>putW(0,t,x,z,ry,st))
+ if(window.__pabellonCampus)window.__pabellonCampus.forEach(([x,z,t,ry,st])=>{const q=putW(0,t,x,z,ry,st);if(q&&typeof groundH==='function')q.position.y+=groundH(x,z)})   /* comedor y plaza están a 1.20 m */
  /* cancha de fútbol: equipo azul vs blanco + referí */
  const C=window.__cancha||{x:-87,z:-10,hl:30,hw:19,y:.5};                                   /* la cancha se define en 04-entorno.js */
  [[-24,6],[-12,-10],[2,9],[14,-6],[-20,-12],[10,12],[-2,0]].forEach(([dx,dz],i)=>{putW(0,i%3==2?'profesor':(i%2?'alumno':'persona'),C.x+dx,C.z+dz,Math.random()*6.28,false).position.y=C.y||0});

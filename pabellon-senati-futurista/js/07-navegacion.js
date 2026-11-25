@@ -19,7 +19,8 @@ const blocked=(x,z,f)=>cols[f].some(c=>x>c[0]-.28&&x<c[1]+.28&&z>c[2]-.28&&z<c[3
    y la diagonal ya no es más rápida. P.sp = velocidad actual (m/s), P.run = true mientras se corre de verdad. */
 const SPD_WALK=2.3,SPD_RUN=5.8;let mvx=0,mvz=0;
 /* altura del suelo en plataformas elevadas (estadio/loza): sube suave en la rampa de los portones */
-function groundH(x,z){let h=0;const R=window.RAISED;if(R)for(const r of R)if(x>r.x0&&x<r.x1&&z>r.z0&&z<r.z1){if(r.up!==undefined){h=Math.max(h,r.h*Math.max(0,Math.min(1,(z-r.z0)/(r.up-r.z0))));continue}   /* escalera: sube en z hasta r.up */
+function groundH(x,z){let h=0;const R=window.RAISED;if(R)for(const r of R)if(x>r.x0&&x<r.x1&&z>r.z0&&z<r.z1){if(r.ax!==undefined){h=Math.max(h,r.h*Math.max(0,Math.min(1,(x-r.ax)/(r.bx-r.ax))));continue}   /* escalera a lo largo de X: de ax (suelo) a bx (nivel alto) */
+  if(r.az!==undefined){h=Math.max(h,r.h*Math.max(0,Math.min(1,(z-r.az)/(r.bz-r.az))));continue}   /* escalera a lo largo de Z */
   const d=Math.min(x-r.x0,r.x1-x,z-r.z0,r.z1-z);h=Math.max(h,r.h*Math.min(1,d/(r.ramp||.01)))}return h}
 function walkStep(dt){const fw=(keys.w||keys.arrowup?1:0)-(keys.s||keys.arrowdown?1:0),st=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0);
  let ix=-Math.sin(P.yaw)*fw+Math.cos(P.yaw)*st,iz=-Math.cos(P.yaw)*fw-Math.sin(P.yaw)*st;const n=Math.hypot(ix,iz);if(n>1){ix/=n;iz/=n}
