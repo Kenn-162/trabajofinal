@@ -3,6 +3,7 @@
    1. Calle entre la Escuela de Artes Gráficas y el pabellón (+ calzada de ingreso prolongada hasta la pista sur)
    2. Muro a lo largo de la pista sur, de extremo a extremo
    3. Auditorio más pequeño: su mitad oeste pasa a ser una plaza con la puerta de ingreso
+   3b. Estadio y loza elevados 1.20 m: muro de piedra negra, escaleras con borde amarillo, barandas inox y reja negra alta
    4. Comedor habilitado: se entra por la puerta, con barra, cocina, mesas y carta
    5. Pedidos del comedor (al final de este archivo): E junto a la barra = carta → pagar → recoger en ENTREGA, y puerta corrediza
    Cada bloque está aislado en try/catch: si uno falla, el resto del campus queda como antes.
@@ -116,6 +117,64 @@ ok('Auditorio y plaza',()=>{
   for(let i=0;i<5;i++)royalPalm(-114+i*9,-109.3,1.0);datePalm(-72.5,-108.5,.9);
   tree(-116,-100,.85);tree(-116,-80,.9);bushY(-116,-90,.9);bushY(-110,-110.3,.8);bushY(-92,-110.3,.8);bushY(-76,-110.3,.8);
   bench(-108,-72.4);bench(-96,-72.4);bench(-84,-72.4);lampPost(-72,-106,0);lampPost(-114,-76,0);
+});
+
+/* ───────── 3b · ESTADIO Y LOZA ELEVADOS (≈1.20 m, como en las fotos) ─────────
+   Muro de piedra negra rugosa con remate claro, escaleras de 6 peldaños con borde amarillo y barandas de acero inoxidable
+   en cada portón, y reja negra alta con marcos (sobre la plataforma). Se sube solo por las escaleras. */
+ok('Estadio elevado',()=>{
+  const R=window.RAISED&&window.RAISED[0],CA=window.__cancha;
+  if(!R||!CA||!window.__fences)throw new Error('falta la plataforma del estadio');
+  const H=R.h,N=6,RISE=H/N,RUN=.32,W=4,ZB=R.z0-.12;                      /* ZB = cara exterior del remate claro */
+  const gates=[CA.x,((CA.x+CA.hl+2.5)+R.x1)/2];                          /* centro de cada portón: cancha y loza */
+  const stoneT=tex(256,256,(c,w,h)=>{c.fillStyle='#23262a';c.fillRect(0,0,w,h);noise(c,w,h,2600,.55,8,70);noise(c,w,h,900,.35,70,120);
+    c.strokeStyle='rgba(0,0,0,.55)';c.lineWidth=3;for(let y=0;y<h;y+=64){c.beginPath();c.moveTo(0,y);c.lineTo(w,y);c.stroke();for(let x=((y/64)%2)*64;x<w;x+=128){c.beginPath();c.moveTo(x,y);c.lineTo(x,y+64);c.stroke()}}});
+  stoneT.wrapS=stoneT.wrapT=THREE.RepeatWrapping;
+  const stone=(len,hh)=>{const t=stoneT.clone();t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(len/1.4,hh/1.4);t.needsUpdate=true;return new THREE.MeshStandardMaterial({map:t,roughness:.95,metalness:.05,envMapIntensity:.2})};
+  const solido=(x0,x1,y0,y1,z0,z1,m)=>{const q=boxM(m,x0,x1,y0,y1,z0,z1);return q};
+  /* muro de contención (sobre él queda el sardinel claro de 04-entorno.js) */
+  const WH=H-.1,e=.12;
+  solido(R.x0-e,R.x1+e,0,WH,R.z0-e,R.z0,stone(R.x1-R.x0,WH));solido(R.x0-e,R.x1+e,0,WH,R.z1,R.z1+e,stone(R.x1-R.x0,WH));
+  solido(R.x0-e,R.x0,0,WH,R.z0,R.z1,stone(R.z1-R.z0,WH));solido(R.x1,R.x1+e,0,WH,R.z0,R.z1,stone(R.z1-R.z0,WH));
+
+  /* escaleras */
+  const yel=S(0xf2b800,.5),tread=S(0xb9bdc0,.9),inox=S(0xd3d8dc,.22,{metalness:.9,envMapIntensity:1.2});
+  gates.forEach(gx=>{
+    for(let i=0;i<N;i++){const top=(i+1)*RISE,zf=ZB-(N-i)*RUN,zr=ZB-(N-i-1)*RUN;
+      solido(gx-W/2,gx+W/2,0,top,zf,zr,tread);
+      solido(gx-W/2,gx+W/2,top,top+.012,zf,zf+.09,yel);                                 /* borde amarillo del peldaño */
+      for(const s of[-1,1]){const xa=gx+s*W/2,xb=xa+s*.35;solido(Math.min(xa,xb),Math.max(xa,xb),0,top+.1,zf,zr,stone(RUN,top))}}   /* mejillas de piedra */
+    const zA=ZB-N*RUN,zE=ZB+.12;
+    window.RAISED.push({x0:gx-W/2,x1:gx+W/2,z0:zA,z1:R.z0,h:H,up:ZB});                  /* la navegación sube por la escalera */
+    for(const s of[-1,1])obst(Math.min(gx+s*W/2,gx+s*(W/2+.35)),Math.max(gx+s*W/2,gx+s*(W/2+.35)),zA,ZB);
+    /* barandas de acero inoxidable: pasamanos inclinado + intermedio + postes */
+    for(const s of[-1,1]){const x=gx+s*(W/2+.175);
+      for(const hh of[.95,.5]){const y0=hh+RISE*.5,y1=hh+H,dz=ZB-zA,dy=y1-y0,len=Math.hypot(dz,dy);
+        const r=new THREE.Mesh(new THREE.CylinderGeometry(hh>.9?.035:.022,hh>.9?.035:.022,len,8),inox);r.position.set(x,(y0+y1)/2+.1,(zA+ZB)/2);r.rotation.x=Math.atan2(dz,dy);r.castShadow=true;scene.add(r)}
+      for(let i=0;i<N;i+=2){const top=(i+1)*RISE+.1,zc=ZB-(N-i-.5)*RUN,yr=.95+RISE*.5+.1+H*((zc-zA)/(ZB-zA));cylM(inox,.03,.03,yr-top,x,(top+yr)/2,zc,8)}
+      const zt=ZB-.12;cylM(inox,.03,.03,.95+.1,x,H+.1+.475,zt,8);                         /* poste de remate arriba */
+    }
+  });
+
+  /* reja alta negra con marcos (FH sobre la plataforma) */
+  const FH=6,hh=FH-.2,negro=S(0x111316,.5,{metalness:.55,envMapIntensity:.8});
+  const mt=tex(128,128,(c,w,h)=>{c.clearRect(0,0,w,h);c.strokeStyle='#15181b';c.lineWidth=4;for(let i=-h;i<=w+h;i+=24){c.beginPath();c.moveTo(i,0);c.lineTo(i+h,h);c.stroke();c.beginPath();c.moveTo(i,h);c.lineTo(i+h,0);c.stroke()}});
+  mt.wrapS=mt.wrapT=THREE.RepeatWrapping;
+  const malla=new THREE.MeshStandardMaterial({map:mt,alphaTest:.4,side:THREE.DoubleSide,roughness:.55,metalness:.5,envMapIntensity:.6});
+  const posts=[],thin=[];
+  window.__fences.forEach(([x0,z0,x1,z1])=>{
+    const L=Math.hypot(x1-x0,z1-z0);if(L<.5)return;
+    const ang=Math.atan2(-(z1-z0),x1-x0),cx=(x0+x1)/2,cz=(z0+z1)/2,ux=(x1-x0)/L,uz=(z1-z0)/L;
+    const g=new THREE.PlaneGeometry(L,hh);{const uv=g.attributes.uv;for(let i=0;i<uv.count;i++){uv.setX(i,uv.getX(i)*L/1.0);uv.setY(i,uv.getY(i)*hh/1.0)}}
+    const m=new THREE.Mesh(g,malla);m.position.set(cx,H+.2+hh/2,cz);m.rotation.y=ang;scene.add(m);
+    for(const [y,t,d] of[[.12,.3,.16],[2.9,.12,.16],[3.05,.12,.16],[4.4,.1,.14],[FH-.06,.16,.2]]){const b=new THREE.Mesh(new THREE.BoxGeometry(L,t,d),negro);b.position.set(cx,H+y,cz);b.rotation.y=ang;b.castShadow=true;scene.add(b)}
+    const n=Math.max(1,Math.round(L/4));
+    for(let i=0;i<=n;i++){posts.push([x0+ux*L*i/n,z0+uz*L*i/n]);if(i<n)thin.push([x0+ux*L*(i+.5)/n,z0+uz*L*(i+.5)/n])}
+    obst(Math.min(x0,x1)-.4,Math.max(x0,x1)+.4,Math.min(z0,z1)-.4,Math.max(z0,z1)+.4);
+  });
+  {const d=new THREE.Object3D();
+   const a=new THREE.InstancedMesh(new THREE.BoxGeometry(.24,FH,.24),negro,posts.length);posts.forEach(([x,z],i)=>{d.position.set(x,H+FH/2,z);d.updateMatrix();a.setMatrixAt(i,d.matrix)});a.castShadow=true;a.frustumCulled=false;scene.add(a);
+   const b=new THREE.InstancedMesh(new THREE.BoxGeometry(.1,FH-3.1,.1),negro,thin.length);thin.forEach(([x,z],i)=>{d.position.set(x,H+3.05+(FH-3.1)/2,z);d.updateMatrix();b.setMatrixAt(i,d.matrix)});b.frustumCulled=false;scene.add(b)}
 });
 
 /* ───────── 4 · COMEDOR HABILITADO ───────── */

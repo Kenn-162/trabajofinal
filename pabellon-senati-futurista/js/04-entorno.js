@@ -569,11 +569,11 @@ obst(-122,-8,34,58);           /* escuela de Artes Gráficas */
 obst(131,167,-155,57);        /* escuela de Mecánica de Mantenimiento */
 obst(58,70.4,-22,-9);         /* contenedores */
 
-/* ── ESTADIO: CANCHA DE FÚTBOL + LOZA DEPORTIVA, sobre una plataforma elevada 50 cm y cercada con rejas ──
+/* ── ESTADIO: CANCHA DE FÚTBOL + LOZA DEPORTIVA, sobre una plataforma elevada 1.20 m y cercada con rejas ──
    Plano del usuario: la plataforma está al nivel del comedor y el auditorio (sobresale ~50 cm de la pista y las veredas).
    El largo de la loza = el ancho de la cancha (38 m). Se entra por dos portones al norte (lado de la vereda). */
-const PL={x0:-119.5,x1:-27.5,z0:-30.4,z1:10.8,h:.5};
-window.RAISED=[{x0:PL.x0,x1:PL.x1,z0:PL.z0,z1:PL.z1,h:PL.h,ramp:1.3}];       /* la navegación sube/baja suavemente en los portones */
+const PL={x0:-119.5,x1:-27.5,z0:-30.4,z1:10.8,h:1.2};
+window.RAISED=[{x0:PL.x0,x1:PL.x1,z0:PL.z0,z1:PL.z1,h:PL.h,ramp:.02}];       /* se sube por las escaleras de los portones (js/04c-ajustes.js, bloque «Estadio elevado») */       /* la navegación sube/baja suavemente en los portones */
 const fieldLineMat=new THREE.MeshBasicMaterial({color:0xf2f4ee,transparent:true,opacity:.92,depthWrite:false});
 const FC={x:-87,z:-9.8},HL=30,HW=19;                                 /* centro de la cancha, mitad de largo y de ancho (60 × 38 m) */
 window.__cancha={x:FC.x,z:FC.z,hl:HL,hw:HW,y:PL.h};
