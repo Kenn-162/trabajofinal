@@ -60,7 +60,7 @@ ok('Calle Artes Gráficas / pabellón',()=>{
 
 /* ───────── 2 · MURO A LO LARGO DE LA PISTA SUR ───────── */
 ok('Muro pista sur',()=>{
-  const X0=-175,X1=175,ZC=66.6,TH=.5,HM=2.8,DX=76,GW=1.9,HP=2.4;                      /* puerta peatonal frente a la Torre B (x 76) */
+  const X0=-175,X1=175,ZC=66.6,TH=.5,HM=2.8,DX=0,GW=1.9,HP=2.4;                       /* puerta peatonal en el eje de la calzada de ingreso, donde cruza la pista sur */
   const t0=tex(512,256,(c,w,h)=>{c.fillStyle='#e3e6e9';c.fillRect(0,0,w,h);noise(c,w,h,1200,.07,120,225);
     c.fillStyle='#8f969e';c.fillRect(0,h*.88,w,h*.12);c.fillStyle='rgba(40,48,60,.22)';c.fillRect(0,0,4,h);
     c.fillStyle='#1646a0';c.fillRect(0,h*.06,w,h*.07);logo(c,w/2,h*.52,40,'#1646a0')});
@@ -81,7 +81,7 @@ ok('Muro pista sur',()=>{
    for(const [x,y,ww,hh] of[[w/2,.08,w,.1],[w/2,HP-.05,w,.1],[.04,(HP-.1)/2+.05,.08,HP-.1],[w-.04,(HP-.1)/2+.05,.08,HP-.1]]){const b=new THREE.Mesh(new THREE.BoxGeometry(ww,hh,.1),portalBlue);b.position.set(x,y,0);hoja.add(b)}
    const mn=new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,.16,8),S(0xd3d8dc,.25,{metalness:.9}));mn.position.set(w-.18,1.05,.08);mn.rotation.z=Math.PI/2;hoja.add(mn);
    hoja.position.set(DX-GW/2+.02,0,ZC-TH/2-.05);hoja.rotation.y=Math.PI*.62;scene.add(hoja)}                       /* hoja entreabierta hacia el campus */
-  box(0xd6d9db,DX-1.4,DX+1.4,0,.07,ZC-.4,75);                                                           /* senda hasta la Torre B */
+  box(0xd6d9db,DX-1.4,DX+1.4,0,.07,ZC-.4,73.4);box(0xd6d9db,DX-1.4,36,0,.07,70.6,73.4);                 /* senda hasta las torres */
 });
 
 /* ───────── 3 · AUDITORIO MÁS PEQUEÑO + PLAZA CON LA PUERTA ───────── */
